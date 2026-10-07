@@ -253,3 +253,33 @@ Risk if wrong: If merchants find gift-card cost noise undesirable, add an `isGif
 Evidence: tests/unit/row-rules.test.ts:57-66; tests/integration/scan-engine.test.ts seeded-catalog assertion; DECISIONS D-19.
 Status: Pending user feedback
 
+## D-26: Encrypting session storage wraps PrismaSessionStorage instead of a hand-rolled adapter
+Type: decision
+Phase: 3
+Choice: `app/lib/session-storage.server.ts` implements Shopify's `SessionStorage` interface by wrapping `PrismaSessionStorage`: `storeSession` clones the Session (`new Session(session.toObject())`) and seals `accessToken`/`refreshToken` with AES-256-GCM (crypto.server `seal`, format `enc:{json}`); `loadSession`/`findSessionsByShop` open sealed values. `deleteSession(s)` pass through unchanged.
+Alternatives considered: (a) hand-write all five methods with Prisma queries - reimplements the library's row mapping for no security gain; (b) encrypt at the column level with pgcrypto - key would live in the DB, not env.
+Why: reuse the library's tested mapping; encryption-at-rest of tokens is what the spec requires; cloning guarantees the caller's in-memory Session keeps its plaintext token (post-install code paths still use `session.accessToken` directly). Legacy plaintext rows load unchanged (no `enc:` prefix) and are re-sealed on the next store, so a live deploy migrates itself. A sealed value that fails to open (tampered or wrong key version) is left as ciphertext - the token then fails upstream, forcing re-auth, rather than silently decrypting to something else.
+Risk if wrong: none functional; if the library changes its row mapping the wrapper still only adds a string transform on two fields.
+Evidence: tests/integration/session-storage.test.ts (8 tests: encryption at rest, round-trip, no caller mutation, legacy plaintext fallback, tamper tolerance, key-version rejection, no key material in ciphertext, find/delete). Verified Session.toObject()/constructor(SessionParams) in @shopify/shopify-api dist/ts/lib/session/session.d.ts. Note: toBeInstanceOf(Session) was dropped from the test because two copies of the Session class exist in the tree (adapter constructs from a different package instance); functional assertions (methods work) are kept instead.
+Status: Pending user feedback
+
+## D-27: shopifyApp pinned to ADMIN_API_VERSION ("2026-07" = ApiVersion.July26); single-constant rule now holds
+Type: decision
+Phase: 3
+Choice: `app/shopify.server.ts` uses `apiVersion: ADMIN_API_VERSION as ApiVersion` (imported from `app/lib/api-version.ts`, value "2026-07") instead of the template's ApiVersion.October25; `export const apiVersion = ADMIN_API_VERSION`. Removed the direct PrismaSessionStorage usage (superseded by D-26).
+Alternatives considered: keep ApiVersion.October25 (stale, violates the single-constant rule and the pinned-version spec item).
+Why: spec requires one pinned API version constant used everywhere; verified `July26 = "2026-07"` exists in the installed @shopify/shopify-api (dist/ts/lib/types.d.ts), so the pinned string is a valid enum value at runtime, not just a cast.
+Risk if wrong: if Shopify ships a breaking change in 2026-07 handling, the pin would need bumping - one-line change in api-version.ts.
+Evidence: grep July26 node_modules/@shopify/shopify-api/dist/ts/lib/types.d.ts -> `July26 = "2026-07"`; npm run verify (typecheck) green.
+Status: Pending user feedback
+
+## D-28: ENCRYPTION_KEY/SIGNING_KEY dev values were regenerated; env regex and crypto floor disagree on minimum length
+Type: assumption
+Phase: 3
+Choice: The dev `.env` keys encoded only 31 bytes (44 base64 chars ending in `==`), which the crypto layer correctly rejects (`material()` requires >= 32 decoded bytes for AES-256). Regenerated both dev keys as `v1:` + base64(32 random bytes). The zod regex (`v1:[A-Za-z0-9+/=_-]{43,}`) allows 44 chars with two `=` padding chars (31 bytes), so env validation alone can pass a too-short key; the crypto floor is the real guard and fires at first use.
+Alternatives considered: relax the crypto floor to 31 bytes (insecure - AES-256 needs 32); tighten the zod regex to require exactly-unpadded 43+ chars (rejects valid `openssl rand -base64 32` output, which ends in one `=` and decodes to 32 bytes).
+Why: keep the strict crypto check (security floor) and accept that env validation is format-only; the README/env example documents `openssl rand -base64 32` as the generator.
+Risk if wrong: a merchant could paste a 31-byte key that passes env validation and then crashes at first token encryption - the error message names the cause explicitly.
+Evidence: node decode check (raw len 47 -> material 44 chars -> 31 bytes); tests/integration/session-storage.test.ts failed with "encryption key material must decode to at least 32 bytes" before the fix, 8/8 green after.
+Status: Pending user feedback
+
