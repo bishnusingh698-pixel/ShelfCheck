@@ -1,0 +1,233 @@
+// This is the ShelfCheck Prisma schema.
+// Migrations are forward-only in Prisma; each migration ships a hand-written down.sql
+// (see scripts/migrate-down.mjs and tests/integration/migrations.test.ts).
+// Raw-SQL objects (partial unique indexes, advisory-lock helpers) live in migration.sql.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  @@index([shop])
+}
+
+model Shop {
+  id            String    @id @default(cuid())
+  shopDomain    String    @unique
+  scopes        String?
+  plan          String    @default("free")
+  planStatus    String?
+  planCheckedAt DateTime?
+  uiLocale      String?
+  notifyLocale  String?
+  timezone      String?
+  currency      String?
+  shopHandle    String?
+  settings      Json      @default("{}")
+  installedAt   DateTime  @default(now())
+  uninstalledAt DateTime?
+  lastScanAt    DateTime?
+  lastDigestAt  DateTime?
+
+  scans         Scan[]
+  variants      VariantIndex[]
+  issues        Issue[]
+  ignoreRules   IgnoreRule[]
+  jobs          Job[]
+  notifications NotificationLog[]
+  telegramLink  TelegramLinkToken[]
+
+  @@index([uninstalledAt])
+}
+
+model Scan {
+  id               String    @id @default(cuid())
+  shopId           String
+  trigger          String // install | manual | scheduled
+  status           String // queued | running | parsing | completed | failed | canceled
+  bulkOperationId  String?
+  attempt          Int       @default(0)
+  variantsSeen     Int       @default(0)
+  variantsAnalyzed Int       @default(0)
+  overCapCount     Int       @default(0)
+  healthScore      Int?
+  counts           Json      @default("{}")
+  errorCode        String?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, status])
+  @@index([shopId, createdAt])
+}
+
+model VariantIndex {
+  shopId                String
+  variantGid            String
+  productGid            String
+  inventoryItemId       String?
+  productTitle          String?
+  variantTitle          String?
+  vendor                String?
+  skuRaw                String?
+  skuNorm               String?
+  barcode               String?
+  price                 String?
+  compareAtPrice        String?
+  productStatus         String? // ACTIVE | DRAFT | ARCHIVED
+  isGiftCard            Boolean   @default(false)
+  requiresShipping      Boolean   @default(true)
+  weightPresent         Boolean   @default(false)
+  costPresent           Boolean   @default(false)
+  hasImage              Boolean   @default(false)
+  variantCountOnProduct Int       @default(1)
+  tracked               Boolean   @default(false)
+  inventoryPolicy       String? // DENY | CONTINUE
+  inventoryQty          Int?
+  publishedAnyChannel   Boolean   @default(false)
+  fingerprint           String?
+  seenScanId            String?
+  updatedAt             DateTime  @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@id([shopId, variantGid])
+  @@index([shopId, skuNorm])
+  @@index([shopId, barcode])
+  @@index([shopId, inventoryItemId])
+  @@index([shopId, productGid])
+}
+
+model Issue {
+  id                     String    @id @default(cuid())
+  shopId                 String
+  type                   String
+  severity               String // high | medium | low
+  variantGid             String
+  productGid             String?
+  groupKey               String?
+  details                Json      @default("{}")
+  status                 String    @default("open") // open | snoozed | ignored | intentional | resolved
+  snoozedUntil           DateTime?
+  intentionalMemberCount Int?
+  firstSeenScanId        String?
+  lastSeenScanId         String?
+  firstSeenAt            DateTime  @default(now())
+  resolvedAt             DateTime?
+  notifiedEmailAt        DateTime?
+  notifiedTelegramAt     DateTime?
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, type, variantGid, groupKey])
+  @@index([shopId, status, severity])
+  @@index([shopId, groupKey])
+  @@index([shopId, type, status])
+}
+
+model IgnoreRule {
+  id        String   @id @default(cuid())
+  shopId    String
+  scope     String // sku | variant | product | vendor
+  value     String
+  issueType String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, scope])
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  shopId      String?
+  shopDomain  String
+  topic       String
+  webhookId   String   @unique
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+  attempts    Int      @default(0)
+  payload     Json     @default("{}")
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  shopId    String?
+  kind      String
+  payload   Json     @default("{}")
+  runAt     DateTime @default(now())
+  attempts  Int      @default(0)
+  lockedAt  DateTime?
+  lockedBy  String?
+  lastError String?
+  status    String   @default("pending") // pending | running | done | failed
+  dedupeKey String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shop Shop? @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAt])
+  @@index([kind, status])
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  shopId    String
+  channel   String // email | telegram
+  kind      String // digest | alert
+  periodKey String
+  status    String
+  errorCode String?
+  sentAt    DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, channel, kind, periodKey])
+}
+
+model TelegramLinkToken {
+  tokenHash String
+  shopId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@id([tokenHash])
+}
+
+model RateLimitBucket {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
+}

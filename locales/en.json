@@ -1,0 +1,308 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Find and fix catalog problems before they stop a shipment."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "issues": "Issues",
+    "rules": "Rules",
+    "settings": "Settings",
+    "plans": "Plans"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "retry": "Retry",
+    "undo": "Undo",
+    "close": "Close",
+    "copySku": "Copy SKU",
+    "copied": "Copied to clipboard",
+    "openInAdmin": "Open in Shopify admin",
+    "loading": "Loading…",
+    "errorTitle": "Something went wrong",
+    "errorBody": "The last action could not be completed. You can retry it.",
+    "empty": "Nothing here yet"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "Missing SKU",
+      "DUPLICATE_SKU": "Duplicate SKU",
+      "MISSING_BARCODE": "Missing barcode",
+      "DUPLICATE_BARCODE": "Duplicate barcode",
+      "INVALID_BARCODE": "Invalid barcode",
+      "PUBLISHED_ZERO_INVENTORY": "Published with no inventory",
+      "VARIANT_MISSING_IMAGE": "Variant missing image",
+      "MISSING_WEIGHT": "Missing weight",
+      "MISSING_COST": "Missing cost",
+      "COMPARE_AT_INVALID": "Invalid compare-at price",
+      "ZERO_PRICE": "Zero price"
+    },
+    "severity": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "status": {
+      "open": "Open",
+      "snoozed": "Snoozed",
+      "ignored": "Ignored",
+      "intentional": "Intentional",
+      "resolved": "Resolved"
+    },
+    "hint": {
+      "scientific_notation": "Looks like scientific notation (a CSV export may have corrupted this barcode)",
+      "likely_dropped_leading_zero": "An 11-digit value; a leading zero may have been dropped",
+      "inner_whitespace": "Contains whitespace inside the value"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "The compare-at price is lower than the price",
+      "COMPARE_AT_INVALID_equal": "The compare-at price equals the price",
+      "case_or_space_only": "These SKUs differ only in capitalization or spacing",
+      "group_grew": "A new variant joined this group"
+    },
+    "actions": {
+      "snooze": "Snooze",
+      "ignore": "Ignore",
+      "intentional": "Mark as intentional",
+      "resolve": "Mark as resolved",
+      "unsnooze": "Unsnooze"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 days} =30 {30 days} =90 {90 days} other {{count} days}}",
+      "banner": "Snoozed until {date}. It will reopen automatically."
+    },
+    "list": {
+      "title": "Issues",
+      "empty": "No issues match the current filters. Your catalog looks good.",
+      "filterType": "Issue type",
+      "filterSeverity": "Severity",
+      "filterStatus": "Status",
+      "filterVendor": "Vendor",
+      "search": "Search by SKU or product title",
+      "sortBy": "Sort by",
+      "sortSeverity": "Severity",
+      "sortFirstSeen": "First seen",
+      "bulkSnooze": "Snooze selected",
+      "bulkIgnore": "Ignore selected",
+      "bulkIntentional": "Mark selected as intentional",
+      "selected": "{count, plural, =0 {No issues selected} one {# issue selected} other {# issues selected}}",
+      "newBadge": "New",
+      "groupMembers": "All members of this group",
+      "overCapHidden": "{count, plural, one {# issue is beyond your plan's display limit} other {# issues are beyond your plan's display limit}}"
+    }
+  },
+  "dashboard": {
+    "title": "Catalog health",
+    "healthScore": "Health score",
+    "band": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "needs_attention": "Needs attention",
+      "critical": "Critical"
+    },
+    "counts": {
+      "high": "{count, plural, one {# high-severity issue} other {# high-severity issues}}",
+      "medium": "{count, plural, one {# medium-severity issue} other {# medium-severity issues}}",
+      "low": "{count, plural, one {# low-severity issue} other {# low-severity issues}}",
+      "byType": "Issues by type"
+    },
+    "scan": {
+      "title": "Last scan",
+      "status": {
+        "queued": "Queued",
+        "running": "Scanning…",
+        "parsing": "Reading results…",
+        "completed": "Completed",
+        "failed": "Failed",
+        "canceled": "Canceled"
+      },
+      "runNow": "Scan now",
+      "lastScanAt": "Last scanned {time}",
+      "never": "Never scanned",
+      "cooldown": "You can scan again in {minutes} minutes",
+      "failedBody": "The last scan could not finish. You can retry it.",
+      "variants": "{count, plural, one {# variant analyzed} other {# variants analyzed}}"
+    },
+    "usage": {
+      "title": "Plan usage",
+      "variants": "{analyzed} of {cap} variants analyzed",
+      "overCap": "{count, plural, one {# variant was beyond your plan and was not analyzed} other {# variants were beyond your plan and were not analyzed}}",
+      "overCapNote": "Duplicates involving them may be missed.",
+      "upgrade": "Upgrade"
+    },
+    "trend": {
+      "title": "New vs resolved",
+      "last8": "Last 8 scans",
+      "new": "New",
+      "resolved": "Resolved",
+      "scan": "Scan {n}"
+    },
+    "onboarding": {
+      "title": "Set up ShelfCheck",
+      "scanRunning": "First scan running",
+      "reviewIssues": "Review your issues",
+      "setUpDigest": "Set up the weekly digest",
+      "done": "Done"
+    }
+  },
+  "scan": {
+    "started": "Scan started. This usually takes a few minutes.",
+    "denied": {
+      "free": "Your plan includes one scan per month. Upgrade to scan more often.",
+      "dailyLimit": "You reached today's scan limit for your plan.",
+      "cooldown": "A scan just ran. Please wait before starting another.",
+      "active": "A scan is already running."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "issueTypes": "Issue types",
+    "issueTypesHelp": "Turn off any check you do not want to see.",
+    "catalog": {
+      "title": "Catalog scope",
+      "includeDraft": "Include draft products",
+      "includeArchived": "Include archived products",
+      "acceptNonGtin": "Accept non-GS1 barcodes",
+      "acceptNonGtinHelp": "When on, only GS1-length barcodes are checked against the check digit."
+    },
+    "digest": {
+      "title": "Weekly email digest",
+      "enabled": "Send me a weekly digest",
+      "email": "Email address",
+      "day": "Day of week",
+      "hour": "Hour of day",
+      "skipWhenEmpty": "Skip when nothing is new",
+      "test": "Send test email",
+      "bounces": "Delivery problems",
+      "none": "None recorded"
+    },
+    "telegram": {
+      "title": "Telegram alerts",
+      "connect": "Connect Telegram",
+      "connectHelp": "Opens Telegram with a one-time link valid for 15 minutes.",
+      "connected": "Connected",
+      "sendTest": "Send test message",
+      "disabled": {
+        "blocked": "The bot was blocked on Telegram. Reconnect to resume alerts.",
+        "other": "Alerts were disabled after a delivery problem."
+      }
+    },
+    "autoTag": {
+      "title": "Auto-tag",
+      "enable": "Tag products with problems",
+      "help": "Adds the tag \"shelfcheck-fix\" to products with open issues. Requires the write_products permission, which you can grant here.",
+      "requestScope": "Grant permission",
+      "granted": "Permission granted",
+      "denied": "Auto-tag needs the write_products permission."
+    },
+    "language": {
+      "title": "Language",
+      "interface": "Interface language",
+      "notifications": "Notification language"
+    }
+  },
+  "rules": {
+    "title": "Ignore rules",
+    "empty": "No ignore rules yet. Rules keep matching issues out of your list.",
+    "scope": {
+      "sku": "SKU",
+      "variant": "Variant",
+      "product": "Product",
+      "vendor": "Vendor"
+    },
+    "value": "Value",
+    "issueType": "Issue type (optional)",
+    "issueTypeAny": "Any type",
+    "note": "Note (optional)",
+    "add": "Add rule",
+    "delete": "Delete"
+  },
+  "plans": {
+    "title": "Plans",
+    "free": {
+      "name": "Free"
+    },
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Compare plans",
+    "current": "Current plan",
+    "upgrade": "See plans and upgrade",
+    "openManagedPricing": "Manage subscription in Shopify",
+    "locked": {
+      "watchers": "Webhook watchers are available on Starter and Pro.",
+      "digest": "The weekly email digest is available on Starter and Pro.",
+      "autoTag": "Auto-tag is available on Pro.",
+      "telegram": "Telegram alerts are available on Pro."
+    },
+    "feature": {
+      "scans": "Scheduled scans",
+      "manualScans": "Manual scans per day",
+      "issuesShown": "Issues shown",
+      "variantCap": "Variants analyzed",
+      "watchers": "Webhook watchers",
+      "digest": "Weekly email digest",
+      "csv": "CSV export",
+      "autoTag": "Auto-tag",
+      "telegram": "Telegram alerts"
+    }
+  },
+  "toast": {
+    "saved": "Settings saved",
+    "snoozed": "Issue snoozed",
+    "ignored": "Issue ignored",
+    "intentional": "Marked as intentional",
+    "resolved": "Marked as resolved",
+    "scanStarted": "Scan started",
+    "ruleAdded": "Rule added",
+    "ruleDeleted": "Rule deleted",
+    "undone": "Undone"
+  },
+  "csv": {
+    "export": "Export CSV",
+    "contentType": "text/csv"
+  },
+  "email": {
+    "digest": {
+      "subject": "ShelfCheck weekly digest",
+      "newIssues": "{count, plural, =0 {No new issues this week} one {# new issue this week} other {# new issues this week}}",
+      "stillOpen": "{count, plural, one {# issue is still open} other {# issues are still open}}",
+      "top": "Top new issues",
+      "openApp": "Open ShelfCheck",
+      "unsubscribe": "Unsubscribe",
+      "unsubscribeHelp": "You are receiving this because you enabled the weekly digest in ShelfCheck.",
+      "greeting": "Hello,",
+      "summary": "{newCount}. {openCount}.",
+      "footer": "ShelfCheck"
+    }
+  },
+  "telegramMessage": {
+    "alert": {
+      "header": "ShelfCheck found new problems",
+      "body": "{count, plural, one {# new high-severity issue} other {# new high-severity issues}}",
+      "openApp": "Open ShelfCheck"
+    },
+    "test": {
+      "body": "This is a test message from ShelfCheck. Alerts are working."
+    },
+    "connected": {
+      "body": "ShelfCheck alerts are now connected to this chat."
+    }
+  },
+  "unsubscribe": {
+    "title": "Unsubscribe",
+    "body": "Do you want to stop receiving the weekly ShelfCheck digest?",
+    "confirm": "Unsubscribe",
+    "done": "You are unsubscribed. You can re-enable the digest in Settings.",
+    "invalid": "This link is no longer valid."
+  },
+  "errors": {
+    "notFound": "Not found",
+    "forbidden": "You do not have access to this",
+    "generic": "Something went wrong. Please try again."
+  }
+}

@@ -122,3 +122,63 @@ Why: Environment has no Partner account, no Neon/Resend/Telegram secrets.
 Risk if wrong: None; code paths are identical to what a human will run.
 Evidence: `.env.example` (credentials absent by design); HUMAN_STEPS.md.
 Status: Pending user feedback
+
+## D-13: Advisory lock key uses the single bigint form
+Type: decision
+Phase: 2
+Choice: pg_try_advisory_xact_lock(bigint) with key = (NAMESPACE << 32) | fnv1a32(shopId), passed as a string cast to ::bigint in SQL.
+Alternatives considered: two-argument pg_try_advisory_xact_lock(int,int) — verified in pg_proc to be (integer, integer), cannot hold a 64-bit hash; session-level pg_advisory_lock — unsafe through PgBouncer transaction mode (spec-known pitfall).
+Why: Prisma cannot serialize JS bigint parameters (runtime error P2010), and the two-arg form is (int,int). The single bigint form with a namespaced composite key keeps per-shop uniqueness in one 64-bit value.
+Risk if wrong: Lock collisions across shops if hash truncated — mitigated by keeping the full 32-bit FNV hash in the low bits.
+Evidence: psql pg_proc query showing signatures; integration tests "advisory locks (transaction-scoped)" passing.
+Status: Pending user feedback
+
+## D-14: Concurrent scheduled-scan races resolved by catching the partial-unique-index violation
+Type: decision
+Phase: 2
+Choice: In runDueScheduledScans, scan.create for a scheduled scan catches Prisma P2002 and treats it as "a concurrent tick already started this scan" (debug log, not counted, no error propagated).
+Alternatives considered: serializable transactions (overkill, retry storms); advisory lock around scheduler (still racy across ticks because the check-then-insert spans separate statements).
+Why: The partial unique index Scan_shopId_active_partial IS the real guard per spec; the loser of the race must fail gracefully because cron may overlap with the in-process worker.
+Risk if wrong: If P2002 were ever raised for a different reason we would silently skip a scan; P2002 on this table can only come from the active-scan guard or shopId FK (FK would also fail on the count query first).
+Evidence: integration test "concurrent ticks never double-start a scheduled scan" passing (previously failed with P2002).
+Status: Pending user feedback
+
+## D-15: Server-side ICU subset instead of a full i18n framework for jobs
+Type: decision
+Phase: 3
+Choice: i18n.server.ts implements a small balanced-brace ICU parser ({name} placeholders, one plural block, # substitution, CLDR plural categories via Intl.PluralRules) rather than importing i18next+icu into server-only code paths (email/Telegram rendering, loaders).
+Alternatives considered: full i18next with i18next-icu on the server (heavier, pulls client-oriented deps into the job worker); hand-rolled string concatenation (forbidden by spec).
+Why: Emails and Telegram messages need exact ICU plural semantics without React/client dependencies; Intl.PluralRules gives correct CLDR categories per locale (ja/zh collapse to other).
+Risk if wrong: Deeply nested ICU (select inside plural inside plural) would not parse; current catalogs never nest beyond one level, and i18n:check (Phase 1 script) will guard template shape.
+Evidence: unit test "translates with placeholders and plurals" passing for =0/=1/other arms.
+Status: Pending user feedback
+
+## D-16: Digest defaults — Sunday 09:00 shop-local time, skip-when-empty default false
+Type: decision
+Phase: 2
+Choice: digest.day default 0 (Sunday), digest.hour default 9 (09:00), in the shop IANA time zone; scheduled scan hour default 02:00 local.
+Alternatives considered: Monday morning (batches with weekend edits but competes with Monday standups); 09:00 Monday.
+Why: Spec leaves the default to us; Sunday 09:00 local lands before the merchant plans the week, and 02:00 for scans avoids business hours in every time zone.
+Risk if wrong: purely a UX preference; merchant can change day/hour in Settings.
+Evidence: digest.server.ts defaults; scheduler tests.
+Status: Pending user feedback
+
+## D-17: down.sql fixes — Postgres drops PK-backed indexes only via the constraint
+Type: deviation
+Phase: 2
+Choice: down.sql now uses ALTER TABLE ... DROP CONSTRAINT for VariantIndex_pkey (a DROP INDEX errored with "cannot drop index ... because constraint requires it"), and drops only FK constraints that exist.
+Alternatives considered: DROP TABLE ... CASCADE (dangerous in shared schema; spec requires reversible hand-written down migrations).
+Why: Up/down/up is a spec test; the first draft failed on the PK-backed index drop.
+Risk if wrong: none remaining; up-down-up verified end-to-end (12 tables restored).
+Evidence: psql run of down.sql (0 errors), then prisma migrate deploy (RC=0, 12 tables).
+Status: Pending user feedback
+
+## D-18: Free-plan "calendar month" scans: scheduler month start computed via Intl parts, not Date arithmetic
+Type: decision
+Phase: 2
+Choice: calendarMonthStart uses Intl.DateTimeFormat("en-CA", {timeZone, year, month}).formatToParts and builds Date.UTC(y, m-1, 1), avoiding any UTC-only arithmetic and handling DST-affected zones by construction.
+Alternatives considered: new Date(now.getFullYear(), now.getMonth(), 1) (UTC/wrong in shops time zones); libraries like date-fns-tz (extra dependency).
+Why: Spec pitfall: dates computed in UTC when they should be shop-local. Intl parts give the wall-clock date in the shops zone with zero dependencies.
+Risk if wrong: None found; unit tested across TZs in scheduler tests (added in Phase 4 test pack).
+Evidence: scheduler.server.ts; integration tick tests passing with shop timezone "UTC" and period boundaries.
+Status: Pending user feedback
