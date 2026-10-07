@@ -15,8 +15,14 @@ database.sqlite
 
 .env
 .env.*
+!.env.example
 
-package-lock.json
+# Lockfile IS committed: reproducible CI + Render builds (D-24)
+
+# Generated fixtures and pseudo-locale (npm run fixtures:generate / i18n:pseudo)
+tests/fixtures/large-50k.jsonl
+locales/en-XA.json
+playwright-report/
 yarn.lock
 pnpm-lock.yaml
 

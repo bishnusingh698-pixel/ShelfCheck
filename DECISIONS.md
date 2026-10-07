@@ -182,3 +182,74 @@ Why: Spec pitfall: dates computed in UTC when they should be shop-local. Intl pa
 Risk if wrong: None found; unit tested across TZs in scheduler tests (added in Phase 4 test pack).
 Evidence: scheduler.server.ts; integration tick tests passing with shop timezone "UTC" and period boundaries.
 Status: Pending user feedback
+
+## D-19: Gift cards are NOT excluded from MISSING_COST (spec text followed literally)
+Type: decision
+Phase: 6
+Choice: Spec says "Exclude gift cards from every SKU, barcode, and weight check" — cost is not in that list, so MISSING_COST flags gift cards whose inventory item has no unit cost. Also removed a blanket isGiftCard skip in the orchestrator that wrongly suppressed PUBLISHED_ZERO_INVENTORY, VARIANT_MISSING_IMAGE, COMPARE_AT_INVALID, and ZERO_PRICE for gift cards; per-check exclusions live in row-rules.ts only.
+Alternatives considered: excluding gift cards from MISSING_COST (quieter UX — Shopify gift cards typically never carry a unit cost, so every gift-card variant would permanently flag; merchants can ignore-rule it) — rejected as a silent deviation from spec.
+Why: Spec text is the contract; the exclusion list is explicit and cost is not on it. No silent compromises.
+Risk if wrong: MISSING_COST noise for gift-card merchants; mitigated by per-type disable in Settings and ignore rules (product-scope). Listed for native review.
+Evidence: app/detectors/row-rules.ts MISSING_COST branch (comment); scan-engine exact-count test (26 issues incl. gift-card MISSING_COST); <issue_types> normalization section in docs/SPEC.md.
+Status: Pending user feedback
+
+## D-20: JSONL upsert batch size 100 (not spec's 500–1,000) — measured memory on the 50k fixture
+Type: deviation
+Phase: 5
+Choice: streamJsonlIntoIndex commits one bulk INSERT ... ON CONFLICT per batch of UPSERT_BATCH_SIZE rows (env-overridable, default 100). Replaced the first per-row upsert loop (48 s, ~271 MB RSS) with a parameterized bulk insert (3–4 s). Measured peak RSS on the 50,000-variant fixture: batch 500 → ~300 MB, batch 250 → ~280 MB, batch 100 → ~257–265 MB (vitest worker). 100 keeps a ~40 MB margin under the spec's 300 MB ceiling on the 512 MB free tier.
+Alternatives considered: per-row upserts in $transaction (16x slower, similar memory); pg COPY into a staging table + INSERT..SELECT ON CONFLICT (lowest memory, but adds a direct `pg` connection outside Prisma's pool — bigger deviation from the stated stack); batch 50 (marginal gain, more round trips).
+Why: Spec's 300 MB peak-RSS acceptance target wins over its 500–1,000 batch-size suggestion; both cannot be met simultaneously with Prisma's engine on this fixture.
+Risk if wrong: None functional (batch size does not affect correctness; tests assert row-for-row equality either way). Slower for very large shops, still ~4 s for 50k.
+Evidence: tests/integration/jsonl-memory.test.ts (RSS before 101 MB → 257 MB, limit 300, passes; numbers printed by the test); diagnostic runs recorded in PROGRESS.md Phase 5 notes (batch 500: 300 MB, 250: 280 MB, 100: 262 MB, parse-only: 154 MB).
+Status: Pending user feedback
+
+## D-21: Integration test files run serially (shared Postgres test database)
+Type: decision
+Phase: 5
+Choice: vitest top-level `test.fileParallelism: false` — integration files all truncate the same TEST_DATABASE_URL in beforeEach and cannot run in parallel. Per-project placement of the option did not take effect; only the top-level option (or CLI --no-file-parallelism) works in vitest 3.2.7.
+Alternatives considered: per-worker database/schema isolation (robust but a larger test-infra change); keeping default parallelism (caused FK-violation flake: two files truncating each other's rows mid-test).
+Why: One shared Postgres + TRUNCATE-based reset makes parallel files inherently racy; serial files are the standard minimal fix.
+Risk if wrong: Slower integration suite (still ~10 s total); no correctness risk. Unit project also serialized (pure tests, negligible cost).
+Evidence: `vitest run --project integration` before (10 failed with FK errors in combined runs) and after (20 passed, 3 files), 2026-10-07.
+Status: Pending user feedback
+
+## D-22: Seeded-catalog expected counts corrected after hand-derivation audit (MISSING_BARCODE, MISSING_COST, total 26)
+Type: decision
+Phase: 6
+Choice: EXPECTED_ISSUES in scripts/seed-catalog.ts now totals 26: MISSING_BARCODE 2 (1011 HMS-004 AND 1041 draft product — drafts are analyzed by default, so the draft variant's missing barcode must count; my first hand count missed it) and MISSING_COST 2 (1021 + gift card 1061 per D-19). Detector output was re-derived line by line before changing any expectation; the detectors were correct in both cases — my expectations were wrong. Additionally, markIntentionalRegrowth now merges details jsonb (preserving case_or_space_only) instead of replacing it, and its test asserts the two formerly-intentional members specifically (the new member is a separate open row).
+Alternatives considered: "fixing" the detector to match the wrong expectation (rejected — evidence over belief); blanket gift-card skip in orchestrator (rejected, see D-19).
+Why: Spec acceptance 1 requires EXACT counts; the exact-count test exists to catch detector bugs, so expectations must be derived from the spec rules, then verified against the implementation.
+Risk if wrong: None remaining; all 20 integration tests green.
+Evidence: tests/integration/scan-engine.test.ts "streams the fixture and produces EXACTLY the expected issue counts" (26 issues, per-type equality); counts re-derived from <issue_types> table in docs/SPEC.md.
+Status: Pending user feedback
+
+## D-23: Client i18n also uses the self-contained translate.ts renderer; i18next runtime deps removed
+Type: decision
+Phase: 3
+Choice: i18n.client.tsx (React context + useI18n hook) renders messages via the same ICU-subset `translate.ts` used server-side. Uninstalled i18next, i18next-icu, react-i18next, and intl-messageformat.
+Alternatives considered: react-i18next client provider (D-6 original plan); FormatJS/react-intl.
+Why: One renderer for emails, Telegram, jobs, and UI removes a second plural/format code path to test; the 218-key catalog needs only the {count, plural} subset; acceptance 13 forbids unused dependencies and nothing imports the runtimes anymore. D-15 already chose this for jobs; this extends it to the client and supersedes D-6.
+Risk if wrong: If full ICU (select/ordinal/date placeholders in messages) is needed later, translate.ts must be extended rather than swapped in a provider.
+Evidence: `app/i18n/translate.ts`, `app/i18n/i18n.client.tsx`; `grep -rln i18next app server tests scripts` → empty; unit tests 57/57 green incl. plural cases.
+Status: Pending user feedback
+
+## D-24: Polaris web component JSX element names/types — s-list-item and @shopify/app-bridge-types
+Type: decision
+Phase: 8
+Choice: Inside `<s-ordered-list>` the child element is `<s-list-item>` (there is no `s-ordered-list-item` in @shopify/polaris-types 1.1.0). `<s-app-nav>` types come from `@shopify/app-bridge-types`, added to tsconfig `types` so the global IntrinsicElements augmentation loads.
+Alternatives considered: local JSX augmentation file; dropping s-app-nav for a plain nav.
+Why: polaris.d.ts declares `tagName$z = "s-list-item"` and app-bridge-types declares `"s-app-nav": SAppNavAttributes` in its global `declare global { interface IntrinsicElements extends AppBridgeElements }` (dist/index.d.ts lines 72/427). No hand-rolled augmentation needed.
+Risk if wrong: Minimal — if the template's newer guidance names these differently, typecheck fails loudly.
+Evidence: node_modules/@shopify/polaris-types/dist/polaris.d.ts:5841; @shopify/app-bridge-types/dist/index.d.ts:427; `npm run typecheck` → 0 errors.
+Status: Pending user feedback
+
+## D-25: row-rules gift-card unit test asserts MISSING_COST fires (aligns test with D-19)
+Type: deviation
+Phase: 6
+Choice: The unit test "gift cards excluded from SKU, barcode, and weight checks" previously asserted MISSING_COST does not fire for gift cards, contradicting D-19 and the seeded catalog. Test corrected to assert MISSING_COST DOES fire (spec's exclusion list covers only SKU, barcode, and weight checks).
+Alternatives considered: Excluding gift cards from MISSING_COST (would break the seeded-catalog exact-count integration test, which derives 2 MISSING_COST issues including gift-card variant 1061).
+Why: Seed catalog (scripts/seed-catalog.ts:110,132,151,166) and the scan-engine integration test are the source of truth for acceptance 1.
+Risk if wrong: If merchants find gift-card cost noise undesirable, add an `isGiftCard` guard in row-rules and update seed-catalog counts (one line each).
+Evidence: tests/unit/row-rules.test.ts:57-66; tests/integration/scan-engine.test.ts seeded-catalog assertion; DECISIONS D-19.
+Status: Pending user feedback
+

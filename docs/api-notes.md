@@ -140,6 +140,22 @@ Top-level query: **`productVariants`** (ProductVariantConnection) — "Search fo
 
 **[DOC]** cron-job.org free tier used for `POST /jobs/tick` every 10 minutes; the tick is protected by a constant-time-compared secret header and rate-limited. Render free-tier math above is the reason for the 10-minute cadence (spec allows 5–10).
 
+## 16. Dev-store seeding mutations (scripts/seed-dev-store.ts)
+
+**[DOC]** https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate —
+quote: "The `productCreate` mutation only supports creating a product with its initial product variant. To create multiple product variants for a single product and manage prices, use the `productVariantsBulkCreate` mutation."
+Note also: productCreate throttles after 50,000 variants (no more than 1,000 new variants/day) — irrelevant for our ~30-variant fixture catalog.
+
+**[DOC]** https://shopify.dev/docs/api/admin-graphql/latest/mutations/productVariantsBulkCreate —
+signature: `productVariantsBulkCreate(productId, strategy, variants: [ProductVariantsBulkInput!]!, media)`;
+`strategy` (ProductVariantsBulkCreateStrategy): "The strategy defines which behavior the mutation should observe, such as whether to keep or delete the standalone variant (when product has only a single or default variant) when creating new variants in bulk."
+The exact enum member we pass, `REMOVE_STANDALONE`, is the conventional value for that behavior; **[LIVE]** confirm the enum member list at first live run (HUMAN_STEPS §live-seed) — the call is isolated in one line in seed-dev-store.ts.
+
+**[DOC]** https://shopify.dev/docs/api/admin-graphql/latest/input-objects/ProductVariantsBulkInput —
+verified input fields used: `optionValues` (product options for the variant), `price`, `compareAtPrice`, `barcode`, `inventoryPolicy` (DENY/CONTINUE), `inventoryItem` ("The inventory item associated with the variant, used for unit cost." → `sku`, `cost`, `tracked`, `requiresShipping`), `inventoryQuantities` ("The inventory quantities at each location where the variant is stocked… Supported as input with the `productVariantsBulkCreate` mutation only."). Weight lives on `inventoryItem.measurement` per §2 of these notes, which matches the read path; the seeder leaves weight unset (missing-weight fixtures need exactly that).
+
+**[DOC]** Primary location for `inventoryQuantities.locationId`: `shop { primaryLocation { id } }` is the documented default location; **[LIVE]** confirm at first live run (same isolation as above).
+
 ---
 
 ## Pending live verifications (all mapped in HUMAN_STEPS §7)

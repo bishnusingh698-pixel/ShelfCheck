@@ -69,7 +69,7 @@ export function isThrottled(response: GraphQLRawResponse): boolean {
   return response.errors?.some((e) => e.extensions?.code === "THROTTLED") ?? false;
 }
 
-export async function adminGraphQL<T>(
+export async function adminGraphQL(
   executor: AdminGraphQLExecutor,
   query: string,
   variables: Record<string, unknown> | undefined,

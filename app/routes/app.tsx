@@ -4,24 +4,45 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 
 import { authenticate } from "../shopify.server";
+import { requireShopContext } from "../lib/shop-context.server.js";
+import { getMessages } from "../i18n/i18n.server.js";
+import { resolveLocale } from "../i18n/resolve-locale.js";
+import { I18nProvider, useI18n } from "../i18n/i18n.client";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const shop = await requireShopContext(session);
 
-  // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  // Merchant's saved interface language wins; then the locale Shopify reports
+  // for this admin session; then English.
+  const url = new URL(request.url);
+  const locale = resolveLocale(shop.uiLocale ?? url.searchParams.get("locale"));
+
+  return {
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    locale,
+    messages: getMessages(locale),
+  };
 };
 
+function AppNav() {
+  const { t } = useI18n();
+  return (
+    <s-app-nav>
+      <s-link href="/app">{t("nav.dashboard")}</s-link>
+    </s-app-nav>
+  );
+}
+
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, locale, messages } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider apiKey={apiKey}>
-      <s-app-nav>
-        <s-link href="/app">Home</s-link>
-        <s-link href="/app/additional">Additional page</s-link>
-      </s-app-nav>
-      <Outlet />
+      <I18nProvider locale={locale} messages={messages}>
+        <AppNav />
+        <Outlet />
+      </I18nProvider>
     </AppProvider>
   );
 }

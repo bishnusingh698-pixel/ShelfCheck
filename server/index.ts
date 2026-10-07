@@ -5,7 +5,7 @@ import path from "node:path";
 import { startWorker, stopWorker } from "./worker.js";
 import { db } from "../app/db.server.js";
 import { logger } from "../app/lib/logger.server.js";
-import { env } from "../app/env.server.js";
+import "../app/env.server.js";
 
 const port = Number(process.env.PORT || 3000);
 const app = express();

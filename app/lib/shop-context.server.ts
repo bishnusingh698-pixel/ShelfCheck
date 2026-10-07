@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { LoaderFunctionArgs } from "react-router";
 import { db } from "../db.server.js";
 
 /**
@@ -79,12 +78,8 @@ export async function loadShopContext(shopDomain: string): Promise<ShopContext |
 }
 
 /** Resolve shop context for an admin request given the session's shop domain. */
-export async function requireShopContext(
-  args: LoaderFunctionArgs,
-  session: { shop: string },
-): Promise<ShopContext> {
+export async function requireShopContext(session: { shop: string }): Promise<ShopContext> {
   const ctx = await loadShopContext(session.shop);
   if (!ctx) throw new Error(`shop context missing for ${session.shop}`);
-  void args;
   return ctx;
 }

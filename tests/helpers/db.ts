@@ -143,6 +143,32 @@ export async function createVariant(
   });
 }
 
+/** Factory: a scan row for tests. */
+export async function createScan(
+  shopId: string,
+  overrides: Partial<{
+    status: string;
+    trigger: string;
+    bulkOperationId: string | null;
+    attempt: number;
+    startedAt: Date;
+    finishedAt: Date;
+  }> = {},
+) {
+  const db = testDb();
+  return db.scan.create({
+    data: {
+      shopId,
+      status: (overrides.status ?? "queued") as never,
+      trigger: (overrides.trigger ?? "manual") as never,
+      bulkOperationId: overrides.bulkOperationId ?? null,
+      attempt: overrides.attempt ?? 0,
+      startedAt: overrides.startedAt ?? null,
+      finishedAt: overrides.finishedAt ?? null,
+    },
+  });
+}
+
 /** Sign a Shopify webhook body the way Shopify does. */
 export function signWebhook(rawBody: Buffer | string, secret: string): string {
   return execFileSync(

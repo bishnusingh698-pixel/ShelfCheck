@@ -6,7 +6,7 @@ import {
   testDb,
   createShop,
 } from "../helpers/db.js";
-import { enqueue, claimJob, completeJob, failJob, drainJobs, reclaimStuckJobs } from "../../app/jobs/queue.server.js";
+import { enqueue, claimJob, failJob, drainJobs, reclaimStuckJobs } from "../../app/jobs/queue.server.js";
 import { tick } from "../../app/jobs/tick.server.js";
 import { buildHandlerMap, validatePayload, PRODUCT_SYNC_SCHEMA } from "../../app/jobs/handlers.server.js";
 import { tryLockShop, withShopLock } from "../../app/lib/advisory-lock.server.js";
@@ -135,7 +135,6 @@ describe("handlers", () => {
 
 describe("advisory locks (transaction-scoped)", () => {
   it("locks a shop inside a transaction and releases at commit", async () => {
-    const db = testDb();
     const shop = await createShop();
     const result = await withShopLock(shop.id, async (tx) => {
       const lockedAgain = await tryLockShop(shop.id, tx as never);
@@ -153,13 +152,18 @@ describe("advisory locks (transaction-scoped)", () => {
     const shop = await createShop();
     let releaseFirst!: () => void;
     const firstGate = new Promise<void>((r) => (releaseFirst = r));
+    let signalLockTaken!: () => void;
+    const lockTaken = new Promise<void>((r) => (signalLockTaken = r));
     const first = db.$transaction(async (tx) => {
       const locked = await tryLockShop(shop.id, tx);
       expect(locked).toBe(true);
+      signalLockTaken(); // only NOW is it safe to probe for busy
       await firstGate; // hold the transaction (and the xact lock) open
       return "first";
     });
-    // While the first transaction holds the lock, the second sees busy.
+    // Wait until the first transaction actually holds the lock, otherwise the
+    // second could win the race and the assertion would be flaky.
+    await lockTaken;
     const second = await withShopLock(shop.id, async () => "should-not-run");
     expect(second).toBeNull();
     releaseFirst();

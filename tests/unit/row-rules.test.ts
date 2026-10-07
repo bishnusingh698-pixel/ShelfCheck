@@ -60,7 +60,9 @@ describe("row rules", () => {
     expect(types).not.toContain("MISSING_SKU");
     expect(types).not.toContain("MISSING_BARCODE");
     expect(types).not.toContain("MISSING_WEIGHT");
-    expect(types).not.toContain("MISSING_COST");
+    // Spec excludes gift cards only from SKU, barcode, and weight checks; the cost
+    // check has no exclusion (seed catalog line 151, MISSING_COST total 2).
+    expect(types).toContain("MISSING_COST");
   });
 
   it("MISSING_BARCODE for empty barcode", () => {

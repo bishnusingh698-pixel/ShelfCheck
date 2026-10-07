@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createHmac } from "node:crypto";
 import { resolveLocale } from "../../app/i18n/resolve-locale.js";
 import { fallbackChain } from "../../app/i18n/config.js";
 import { seal, open, tryOpen, sha256Hex, constantTimeEqual } from "../../app/lib/crypto.server.js";
@@ -90,7 +91,7 @@ describe("signed tokens", () => {
   it("shopify HMAC verification", () => {
     const secret = "shpss_x";
     const body = JSON.stringify({ id: 1 });
-    const good = require("node:crypto").createHmac("sha256", secret).update(body).digest("base64");
+    const good = createHmac("sha256", secret).update(body).digest("base64");
     expect(verifyShopifyHmac(body, good, secret)).toBe(true);
     expect(verifyShopifyHmac(body, good, "other")).toBe(false);
     expect(verifyShopifyHmac(body, undefined, secret)).toBe(false);

@@ -5,6 +5,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    // Integration files share one Postgres and truncate it in beforeEach, so
+    // files must not run in parallel (pool-level option).
+    fileParallelism: false,
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     projects: [
       {

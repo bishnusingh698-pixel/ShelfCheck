@@ -20,14 +20,20 @@ export interface EnqueueOptions {
   shopId?: string | null;
   runAt?: Date;
   dedupeKey?: string | null;
-  maxAttempts?: number;
 }
 
 export const DEFAULT_MAX_ATTEMPTS = 5;
 
+/**
+ * Client accepted by queue functions: the full PrismaClient or a transaction
+ * (Omit<PrismaClient, '$transaction'|...>). Structural on the `job` delegate
+ * so both work without widening the whole type.
+ */
+export type QueueClient = Pick<PrismaClient, "job">;
+
 /** Enqueue a job. If a pending job with the same dedupeKey exists, returns it untouched. */
-export async function enqueue(options: EnqueueOptions, client: PrismaClient = db) {
-  const { kind, payload, shopId, runAt, dedupeKey, maxAttempts = DEFAULT_MAX_ATTEMPTS } = options;
+export async function enqueue(options: EnqueueOptions, client: QueueClient = db) {
+  const { kind, payload, shopId, runAt, dedupeKey } = options;
   try {
     return await client.job.create({
       data: {

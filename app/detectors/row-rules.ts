@@ -80,8 +80,9 @@ export function rowRules(row: VariantRow, options: DetectorOptions): DetectorRes
     push("MISSING_WEIGHT", "medium");
   }
 
-  // MISSING_COST (gift cards excluded).
-  if (!row.isGiftCard && !row.costPresent) {
+  // MISSING_COST (spec excludes gift cards only from SKU/barcode/weight checks;
+  // D-19 records that gift cards will typically always flag here).
+  if (!row.costPresent) {
     push("MISSING_COST", "low");
   }
 

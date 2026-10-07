@@ -29,3 +29,27 @@ export function defaultEnabledTypes(): Set<IssueType> {
 export function severityOf(type: IssueType): Severity {
   return ISSUE_REGISTRY[type].severity;
 }
+
+/**
+ * Parse DetectorOptions from the shop settings jsonb. Missing keys fall back
+ * to spec defaults: draft included, archived excluded, strict GTIN checks,
+ * registry defaults for enabled types.
+ */
+export function parseDetectorOptions(settings: Record<string, unknown>): {
+  includeDraft: boolean;
+  includeArchived: boolean;
+  acceptNonGtinBarcodes: boolean;
+  enabledIssueTypes: Set<IssueType>;
+} {
+  const enabledRaw = settings["enabled_issue_types"];
+  const enabled =
+    Array.isArray(enabledRaw)
+      ? new Set(enabledRaw.filter((t): t is IssueType => typeof t === "string" && t in ISSUE_REGISTRY))
+      : defaultEnabledTypes();
+  return {
+    includeDraft: settings["include_draft"] !== false,
+    includeArchived: settings["include_archived"] === true,
+    acceptNonGtinBarcodes: settings["accept_non_gtin_barcodes"] === true,
+    enabledIssueTypes: enabled,
+  };
+}

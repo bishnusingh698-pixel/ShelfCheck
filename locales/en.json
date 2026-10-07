@@ -3,6 +3,16 @@
     "name": "ShelfCheck",
     "tagline": "Find and fix catalog problems before they stop a shipment."
   },
+  "auth": {
+    "heading": "Log in",
+    "button": "Log in",
+    "shopLabel": "Shop domain",
+    "shopDetails": "example.myshopify.com",
+    "error": {
+      "missingShop": "Please enter your shop domain to log in",
+      "invalidShop": "Please enter a valid shop domain to log in"
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "issues": "Issues",

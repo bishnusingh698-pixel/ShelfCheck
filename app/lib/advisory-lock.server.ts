@@ -32,7 +32,7 @@ export function shopLockKey(shopId: string): string {
 /** Try to take the per-shop lock. Returns false if another worker holds it. */
 export async function tryLockShop(
   shopId: string,
-  tx: { $queryRaw: Function } | typeof db = db,
+  tx: Pick<typeof db, "$queryRaw"> = db,
 ): Promise<boolean> {
   const key = shopLockKey(shopId);
   // Prisma cannot serialize JS bigint parameters, so pass a string and cast.

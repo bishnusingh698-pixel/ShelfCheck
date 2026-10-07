@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 /**
  * The single pinned Admin API version. Latest stable on shopify.dev as of
  * 2026-10-07 (docs/api-notes.md §1). 2026-10 is a release candidate.
