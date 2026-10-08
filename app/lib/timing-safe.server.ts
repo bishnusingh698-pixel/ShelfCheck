@@ -21,7 +21,7 @@ export function timingSafeStringEqual(a: string, b: string): boolean {
 }
 
 /** Timing-safe compare where one side may not be constant length (e.g. header vs secret). */
-export function timingSafeSecretEqual(provided: string | undefined, expected: string): boolean {
+export function timingSafeSecretEqual(provided: string | null | undefined, expected: string): boolean {
   if (typeof provided !== "string" || provided.length === 0) return false;
   return timingSafeStringEqual(provided, expected);
 }

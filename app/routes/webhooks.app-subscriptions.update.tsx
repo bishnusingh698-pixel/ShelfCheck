@@ -3,8 +3,9 @@ import { authenticate } from "../shopify.server";
 import { intakeWebhook } from "../webhooks/intake.server.js";
 
 /**
- * app/scopes_update: stored scopes update + auto-tag disable when
- * write_products is removed — all in the async webhook_process job.
+ * app_subscriptions/update: the webhook_process job re-reads
+ * currentAppInstallation.activeSubscriptions (the live state beats the
+ * payload's possibly-PENDING status) and refreshes the cached plan.
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, topic, webhookId, payload } = await authenticate.webhook(request);

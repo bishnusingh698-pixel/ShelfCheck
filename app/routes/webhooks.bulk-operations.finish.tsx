@@ -3,8 +3,9 @@ import { authenticate } from "../shopify.server";
 import { intakeWebhook } from "../webhooks/intake.server.js";
 
 /**
- * app/scopes_update: stored scopes update + auto-tag disable when
- * write_products is removed — all in the async webhook_process job.
+ * bulk_operations/finish: the webhook_process job finds the running scan by
+ * the operation id, streams + parses the result file, and completes the scan.
+ * The scan_poll fallback job makes this delivery optional, not load-bearing.
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, topic, webhookId, payload } = await authenticate.webhook(request);

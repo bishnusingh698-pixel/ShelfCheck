@@ -7,6 +7,7 @@ import {
   fetchResultStream,
   type OperationStatus,
 } from "./bulk-operation.server.js";
+import type { AdminGraphQLExecutor } from "../lib/admin-graphql.server.js";
 import { streamJsonlIntoIndex } from "./jsonl-stream.server.js";
 import { detectDuplicates } from "../detectors/duplicates.server.js";
 import { rowRules } from "../detectors/row-rules.js";
@@ -51,7 +52,7 @@ export async function startScan(
   params: {
     shopId: string;
     scanId: string;
-    makeExecutor: (shopId: string) => Promise<{ graphql: (q: string, v?: Record<string, unknown>) => Promise<unknown> }>;
+    makeExecutor: (shopId: string) => Promise<AdminGraphQLExecutor>;
     client: PrismaClient;
     logger: Logger;
     now?: Date;
@@ -68,11 +69,7 @@ export async function startScan(
 
   try {
     const exec = await makeExecutor(shopId);
-    const op = await startBulkOperation(
-      { graphql: exec.graphql } as never,
-      BULK_SCAN_QUERY,
-      logger,
-    );
+    const op = await startBulkOperation(exec, BULK_SCAN_QUERY, logger);
     await client.scan.update({
       where: { id: scanId },
       data: { bulkOperationId: op.id },
@@ -109,7 +106,7 @@ export async function pollScan(
   params: {
     shopId: string;
     scanId: string;
-    makeExecutor: (shopId: string) => Promise<{ graphql: (q: string, v?: Record<string, unknown>) => Promise<unknown> }>;
+    makeExecutor: (shopId: string) => Promise<AdminGraphQLExecutor>;
     client: PrismaClient;
     logger: Logger;
   },
@@ -120,7 +117,7 @@ export async function pollScan(
     return { terminal: false }; // finished by webhook, or canceled
   }
   const exec = await makeExecutor(shopId);
-  const status = await readBulkOperation({ graphql: exec.graphql } as never, scan.bulkOperationId);
+  const status = await readBulkOperation(exec, scan.bulkOperationId);
   if (!status) return { terminal: false };
   if (status.status === "COMPLETED") {
     await parseAndDetect({ shopId, scanId, status, client, logger: params.logger });

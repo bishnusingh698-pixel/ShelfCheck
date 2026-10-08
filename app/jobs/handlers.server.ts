@@ -32,10 +32,6 @@ export const DIGEST_SEND_SCHEMA = z.object({
   periodKey: z.string(),
 });
 
-export const UNINSTALL_SCHEMA = z.object({
-  shopId: z.string(),
-});
-
 export const TELEGRAM_ALERT_SCHEMA = z.object({
   shopId: z.string(),
   scanId: z.string().optional(),
@@ -51,7 +47,7 @@ export type JobKind =
   | "scan_start"
   | "scan_poll"
   | "digest_send"
-  | "uninstall_cleanup"
+  | "notify_new_issues"
   | "telegram_alert"
   | "webhook_process";
 
@@ -61,7 +57,7 @@ export interface JobHandlers {
   scan_start?: JobHandler;
   scan_poll?: JobHandler;
   digest_send?: JobHandler;
-  uninstall_cleanup?: JobHandler;
+  notify_new_issues?: JobHandler;
   telegram_alert?: JobHandler;
   webhook_process?: JobHandler;
 }

@@ -45,11 +45,18 @@ Status: **Phases 0-6 + encrypting session storage complete; next commit closes t
 - Dev `.env` keys regenerated (31-byte → 32-byte material, D-28).
 - `npm run verify` full gate green (see below).
 
+## Webhook layer + admin executor (this commit)
+- Webhook layer complete: `app/webhooks/` (intake, processors, uninstall, redact), routes `webhooks.app.uninstalled.tsx`, `webhooks.app.scopes_update.tsx`, `webhooks.app-subscriptions.update.tsx`, `webhooks.compliance.tsx`, `webhooks.bulk-operations.finish.tsx`; all HMAC-verified via `authenticate.webhook`, intake→webhook_events→`webhook_process` job, compliance payloads scrubbed to `{shop_domain}`.
+- `app/billing/subscription.server.ts` (Managed Pricing read path, 5-min plan cache), `app/lib/shop-info.server.ts` (isolated `shop` query), `app/lib/shop-bootstrap.server.ts` (afterAuth hook: upsert shop, sync tz/currency/handle, trigger install scan once).
+- `app/jobs/executor.server.ts` (`makeJobExecutor`, `adminContextExecutor`, `adminContextExecutorFromUnauthenticated`, `MissingSessionError`), `app/jobs/handler-map.server.ts` (zod-validated handler map + `productionDrainHandler`), `app/routes/jobs.tick.tsx` (cron entry: timing-safe secret, rate-limited, bounded drain).
+- **Integration tests: `tests/integration/webhooks.test.ts` (17 tests)** — HMAC-signed Requests against the real route actions (401 on tamper, dedupe on webhookId, PII scrubbing, unknown-topic ack, idempotent replay), uninstall semantics (sessions deleted synchronously, pending jobs + telegram tokens cleared, catalog kept), scopes_update (scopes stored, auto-tag disabled when write_products dropped), all three compliance topics end-to-end, subscription plan mapping + cache behavior, processor registry.
+- **Bugs found and fixed by those tests:** (1) D-29 — `authenticate.webhook` delivers topics in the library's storage form (`APP_SCOPES_UPDATE`); processors are now dual-registered under both forms or EVERY production webhook would have been acknowledged unprocessed. (2) D-30 — `shop/redact` cascade-deletes its own webhook event and job rows mid-run; `completeJob`/`failJob`/event bookkeeping now tolerate Prisma P2025 at exactly those update sites.
+- `tests/helpers/shopify-test-env.ts` — first-import env bootstrap (SHOPIFY_APP_URL/API_KEY/API_SECRET/SCOPES) because `app/shopify.server.ts` evaluates `shopifyApp()` at import time and throws on an empty appUrl.
+- `npm run verify` full gate green: 57 unit + 45 integration (was 28), i18n 0 errors/10 warnings, typecheck+lint clean, RSS 261 MB (< 300 MB), secrets:check clean (107 files).
+
 ## Next
-1. Commit session-storage + API-pin work.
-2. Phase 3 remainder: `webhooks/intake.server.ts`, `uninstall.server.ts`, `redact.server.ts`, routes `webhooks.compliance.tsx`, `webhooks.app-subscriptions.update.tsx`; route rewrites for `app.uninstalled`/`scopes-update` on intake. Confirm `authenticate.webhook` HMAC (was mid-verification: node_modules/@shopify/shopify-app-react-router/dist/cjs/server/authenticate/webhooks/authenticate.js).
-3. Phase 7: product-sync, inventory-sync, autotag loop-protection tests (acceptance 2/3/6/7/9).
-4. Phases 8-9 (UI routes/components + UI harness), 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script).
+1. Phase 7: product-sync, inventory-sync, autotag loop-protection tests (acceptance 2/3/6/7/9) — registers `products/create|update|delete`, `inventory_levels/update` processors (Phase 7 per spec).
+2. Phases 8-9 (UI routes/components + UI harness), 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script).
 
 ## Verify command
 ```
@@ -57,9 +64,9 @@ export DATABASE_URL="postgresql://openhands:openhands@127.0.0.1:5432/shelfcheck_
 export TEST_DATABASE_URL="$DATABASE_URL"
 export ENCRYPTION_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
 export SIGNING_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
-npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit (57), integration (28), secrets:check
+npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit (57), integration (45), secrets:check
 ```
-Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 57 unit + 28 integration passed, RSS 267 MB, secrets:check clean (104 files).
+Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 57 unit + 45 integration passed (webhooks 17, queue 13, session-storage 8, scan-engine, jsonl-memory), RSS 261 MB, secrets:check clean (107 files).
 
 ## Known issues / rate-limit incidents
 - None. (Model-request budget: target <=30/min, batching tool calls.)
