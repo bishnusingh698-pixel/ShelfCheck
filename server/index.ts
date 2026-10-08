@@ -3,6 +3,7 @@ import { createRequestHandler } from "@react-router/express";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { startWorker, stopWorker } from "./worker.js";
+import { productionDrainHandler } from "../app/jobs/handler-map.server.js";
 import { db } from "../app/db.server.js";
 import { logger } from "../app/lib/logger.server.js";
 import "../app/env.server.js";
@@ -12,16 +13,21 @@ const app = express();
 
 app.disable("x-powered-by");
 
-// --- Raw body capture before any JSON parsing (webhook HMAC + Resend Svix verification) ---
-type RawReq = express.Request & { rawBody?: Buffer };
-app.use(
-  express.json({
-    limit: "2mb",
-    verify: (req, _res, buf) => {
-      (req as RawReq).rawBody = buf;
-    },
-  }),
-);
+// --- Body handling ---
+// NO express.json here (D-29): it consumes the request stream, and the React
+// Router handler builds its fetch Request from that same Node stream — every
+// webhook body would arrive EMPTY and HMAC validation would fail. Handlers
+// read request.text()/request.json() from the untouched stream instead.
+// Guard against oversized deliveries without consuming the stream:
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
+app.use((req, res, next) => {
+  const length = Number(req.headers["content-length"] ?? 0);
+  if (Number.isFinite(length) && length > MAX_BODY_BYTES) {
+    res.status(413).json({ error: "payload_too_large" });
+    return;
+  }
+  next();
+});
 
 // --- Security headers ---
 app.use((_req, res, next) => {
@@ -65,7 +71,12 @@ const server = app.listen(port, () => {
 });
 
 // --- Worker (drains jobs while the instance is awake; correctness never depends on it) ---
-const worker = startWorker({ logger, intervalMs: 2000, maxDrainMs: 1500 });
+const worker = startWorker({
+  logger,
+  intervalMs: 2000,
+  maxDrainMs: 1500,
+  handler: productionDrainHandler(),
+});
 
 // --- SIGTERM: stop claiming, drain current job, close DB, exit ---
 let shuttingDown = false;

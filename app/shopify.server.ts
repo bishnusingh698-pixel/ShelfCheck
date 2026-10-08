@@ -2,6 +2,7 @@ import "@shopify/shopify-app-react-router/adapters/node";
 import { shopifyApp, AppDistribution, ApiVersion } from "@shopify/shopify-app-react-router/server";
 import { ADMIN_API_VERSION } from "./lib/api-version";
 import { encryptedSessionStorage } from "./lib/session-storage.server";
+import { bootstrapAfterAuth } from "./lib/shop-bootstrap.server";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -14,6 +15,15 @@ const shopify = shopifyApp({
   distribution: AppDistribution.AppStore,
   future: {
     expiringOfflineAccessTokens: true,
+  },
+  hooks: {
+    // Fires on install AND offline-token re-auth. Idempotent: upserts the
+    // shops row, refreshes shop info, and starts the install scan exactly once.
+    // Webhook subscriptions are app-specific (shopify.app.toml), never
+    // registered here (README gotcha / D-1).
+    afterAuth: async ({ session, admin }) => {
+      await bootstrapAfterAuth(session, admin);
+    },
   },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }

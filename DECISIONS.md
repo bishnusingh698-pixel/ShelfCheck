@@ -283,3 +283,23 @@ Risk if wrong: a merchant could paste a 31-byte key that passes env validation a
 Evidence: node decode check (raw len 47 -> material 44 chars -> 31 bytes); tests/integration/session-storage.test.ts failed with "encryption key material must decode to at least 32 bytes" before the fix, 8/8 green after.
 Status: Pending user feedback
 
+
+## D-29: Webhook processors registered under BOTH human and storage topic forms
+Type: decision
+Phase: 3
+Choice: `registerWebhookProcessor(topic, fn)` registers the processor under both the human topic form ("app/scopes_update", as declared in shopify.app.toml) and the library storage form ("APP_SCOPES_UPDATE"); `getWebhookProcessor` falls back to the storage form on lookup; `processWebhookEvent` uses `getWebhookProcessor`. The library normalizes `authenticate.webhook` topic via `topicForStorage()` (`toUpperCase().replace(/\/|\./g, "_")`), so every library-delivered webhook arrives with a storage-form topic.
+Alternatives considered: (a) reverse-normalize the storage form back to human form at intake ("APP_SCOPES_UPDATE" -> "app/scopes/update") - lossy: "app_subscriptions/update" would round-trip to "app/subscriptions/update"; (b) store only storage-form topics everywhere - breaks direct calls (tests, internal triggers) that use the human form and diverges from shopify.app.toml.
+Why: dual keys are one Map.set per registration, immune to the lossy round-trip, and make both intake paths work. Without this, EVERY production webhook would hit processWebhookEvent "no processor" path and be acknowledged without processing (scopes never stored, plans never refreshed, redactions never run) - found by the webhook integration tests, exactly the class of bug spec rule 8 ("verify every API detail against the installed library") exists to catch.
+Risk if wrong: a future topic whose two forms collide would overwrite a processor - none exist in our seven topics.
+Evidence: node_modules/@shopify/shopify-api/dist/cjs/lib/webhooks/registry.js:10-12 (topicForStorage); dist/cjs/lib/webhooks/validate.js (checkWebhooksHeaders); app/webhooks/intake.server.ts:111-135; route-level test "stores new scopes and disables auto-tag when write_products is removed" (failed before the fix, passes after).
+Status: Pending user feedback
+
+## D-30: Prisma P2025 tolerated where shop/redact erases the row being updated
+Type: decision
+Phase: 3
+Choice: Added `isRecordNotFound` (Prisma code P2025) to queue.server.ts next to `isUniqueViolation`, and used it to tolerate a vanished row in three spots: `completeJob` and `failJob` (shop/redact cascade-deletes the shop jobs WHILE the webhook_process job is running - completing that job is then impossible and unnecessary; the erasure is the outcome), and the post-processor bookkeeping `webhookEvent.update` in `processWebhookEvent` (shop/redact deletes the event row itself; erasure wins over bookkeeping).
+Alternatives considered: (a) exclude webhookEvent/Job rows from redaction - GDPR erasure of the merchant shop domain (the row key) would be incomplete; (b) let it throw and rely on job retry - the retried job finds nothing and rethrows forever, poisoning the queue with a permanently "failed" job for a shop that no longer exists.
+Why: P2025 there is not an error but the success path of GDPR erasure; swallowing it exactly at these three update sites keeps the queue clean without weakening erasure. All other P2025 occurrences still propagate.
+Risk if wrong: a genuine bookkeeping bug could be masked as a redaction - the catch is scoped to the single-row update by known id after the processor ran, so collateral is nil.
+Evidence: tests/integration/webhooks.test.ts "the compliance route accepts and processes all three topics" (threw PrismaClientKnownRequestError P2025 before the fix, passes after); prisma/schema.prisma Session/WebhookEvent/Job shopDomain/shopId cascade relations.
+Status: Pending user feedback

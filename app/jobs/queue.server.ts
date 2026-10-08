@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, Prisma } from "@prisma/client";
 import { db } from "../db.server.js";
 import type { Logger } from "pino";
 
@@ -64,6 +64,20 @@ export function isUniqueViolation(error: unknown): boolean {
   );
 }
 
+/**
+ * P2025: the row vanished mid-run. shop/redact cascade-deletes the shop's
+ * jobs WHILE one of them is running; completing that job is then impossible
+ * (and unnecessary) — the erasure is the outcome.
+ */
+export function isRecordNotFound(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2025"
+  );
+}
+
 export interface ClaimedJob {
   id: string;
   shopId: string | null;
@@ -108,7 +122,13 @@ export async function claimJob(
 }
 
 export async function completeJob(id: string, client: PrismaClient = db): Promise<void> {
-  await client.job.update({ where: { id }, data: { status: "done", lockedAt: null, lockedBy: null } });
+  try {
+    await client.job.update({ where: { id }, data: { status: "done", lockedAt: null, lockedBy: null } });
+  } catch (error) {
+    // shop/redact may have erased this very job row while it ran (P2025).
+    if (isRecordNotFound(error)) return;
+    throw error;
+  }
 }
 
 /** Retry with exponential backoff, or fail permanently once attempts are exhausted. */
@@ -120,23 +140,25 @@ export async function failJob(
   const message = error instanceof Error ? error.message : String(error);
   // Never store secrets in last_error: truncate hard.
   const safe = message.slice(0, 500);
+  const finish = async (data: Prisma.JobUpdateInput) => {
+    try {
+      await client.job.update({ where: { id: job.id }, data });
+    } catch (updateError) {
+      if (isRecordNotFound(updateError)) return;
+      throw updateError;
+    }
+  };
   if (job.attempts >= job.maxAttempts) {
-    await client.job.update({
-      where: { id: job.id },
-      data: { status: "failed", lastError: safe, lockedAt: null, lockedBy: null },
-    });
+    await finish({ status: "failed", lastError: safe, lockedAt: null, lockedBy: null });
     return "failed";
   }
   const backoffMs = Math.min(60_000, 1000 * 2 ** (job.attempts - 1));
-  await client.job.update({
-    where: { id: job.id },
-    data: {
-      status: "pending",
-      runAt: new Date(Date.now() + backoffMs),
-      lastError: safe,
-      lockedAt: null,
-      lockedBy: null,
-    },
+  await finish({
+    status: "pending",
+    runAt: new Date(Date.now() + backoffMs),
+    lastError: safe,
+    lockedAt: null,
+    lockedBy: null,
   });
   return "retried";
 }
