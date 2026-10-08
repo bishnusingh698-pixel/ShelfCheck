@@ -335,6 +335,7 @@ Risk if wrong: a webhook storm could postpone a sync indefinitely (thundering ed
 Evidence: tests/integration/watchers.test.ts ("coalesces a burst of products/update webhooks into one pending sync", "coalesces repeated updates per item into one pending job with the freshest value").
 Status: Pending user feedback
 
+
 ## D-34: product sync read-back query mirrors the frozen bulk query (incl. availablePublicationsCount, D-5)
 Type: assumption
 Phase: 7
@@ -344,3 +345,43 @@ Why: identical detector inputs for scan and watcher paths; one verification trai
 Risk if wrong: if `ProductVariant.media` (or `availablePublicationsCount`) does not exist on the 2026-07 non-bulk schema, live watcher syncs fail — isolated behind the `PRODUCT_SYNC_QUERY` constant and `fetchProductVariants`, and recorded as pending live verification in HUMAN_STEPS.md §7.
 Evidence: unverified live (no dev store credentials in this environment); isolated in app/webhooks/product-sync.server.ts.
 Status: Pending user feedback
+
+## D-35: React Router Vite plugin stubs `*.client.*` modules in the server build
+Type: bug
+Phase: 8
+Choice: `app/i18n/i18n.client.tsx` is renamed `app/i18n/i18n.context.tsx` (all 7 importers updated). Modules whose filename matches `*.client.*` are replaced by empty stubs in the SSR/server bundle by the RR Vite plugin, so the server rendered `<html>` without the i18n provider (`const I18nProvider = void 0`), crashing every server-rendered screen. The name `i18n.context` keeps the client-safety of the module without triggering the stub rule.
+Alternatives considered: keeping the name and loading messages server-side only (breaks the shared `useI18n` consumer API); splitting provider/translations into a `*.server.*` twin (duplicates the code).
+Why: one module, one import surface, works in both Vite module graphs.
+Risk if wrong: any future module imported by server code but named `*.client.*` silently breaks SSR again — recorded here as the standing rule.
+Evidence: server bundle before the fix contained `const I18nProvider = void 0`; e2e SSR-never-blank probe failed for every screen, then passed after the rename (test-results archive, Phase 8 e2e run).
+Status: Verified
+
+## D-36: Express 4 catch-all wildcard must be exactly `*`
+Type: bug
+Phase: 8
+Choice: the custom Express server mounts the React Router handler with `app.all("*")` only. With express 4.21+/path-to-regexp v0, named splat patterns (`*any`, `/*splat`, `/{*splat}`) compile to a pattern that never matches, so every RR route 404s; the bare `*` is the single working catch-all form.
+Alternatives considered: `app.use(handler)` (does not bind body parsing / route order the same way); migrating to Express 5 (template pinned to Express 4 for the Shopify App template).
+Why: `*` is the only form that matches every method+path under path-to-regexp v0; verified with a minimal reproduction (`/tmp/express-test.cjs`) before applying.
+Risk if wrong: upgrading Express (or transitive path-to-regexp) changes wildcard semantics; the e2e suite boots this exact server, so a regression is caught by the SSR-never-blank probe.
+Evidence: pre-fix e2e: all RR routes 404 via `/healthz`-only Express; post-fix: 16/16 e2e green through the same server.
+Status: Verified
+
+## D-37: The custom Express server serves `build/client` itself; hashed assets are immutable
+Type: implementation
+Phase: 8
+Choice: `server/index.ts` mounts `express.static("build/client", { index: false })` BEFORE the RR catch-all, with `Cache-Control: public, max-age=31536000, immutable` for files under `assets/` (content-hashed by Vite) and default revalidation for everything else (favicon, etc.). Unknown paths fall through to the RR handler.
+Alternatives considered: letting the RR handler serve assets (it 404s them — `@react-router/express` does not include a static file layer); a separate CDN/static host (spec deploys one Render service).
+Why: without it every `/assets/*.js|css` 404'd, so the app server-rendered but never hydrated; Playwright passed on SSR alone, which hid the bug until the 404s appeared in the webServer log.
+Risk if wrong: none functionally; cache headers are safe because asset names are content-hashed.
+Evidence: curl of the asset URL from the SSR HTML: 404 before, 200 + immutable after; title tag present in HTML.
+Status: Verified
+
+## D-38: The en-XA pseudo locale renders only under the UI harness; document titles come from messages
+Type: implementation
+Phase: 8
+Choice: `en-XA` stays OUT of `SUPPORTED_LOCALES` (a merchant must never receive pseudo text); `resolveLocale` never yields it. Only the app layout loader, when `uiHarnessActive()` is true, honors `?locale=en-XA` so the Playwright pseudo project can assert the generated catalog (acccented text present, no missing-key markers). Page `<title>`s are localized via `meta` exports that read the layout loader's `messages` (new key `app.documentTitle`: "ShelfCheck — {title}"), satisfying both the no-hard-coded-strings rule and axe `document-title` in every locale.
+Alternatives considered: adding en-XA to SUPPORTED_LOCALES (leaks to merchants); hard-coding a `<title>` in root.tsx (violates spec §<i18n> zero-hard-coded-strings); reading messages inside `meta` from `getMessages` directly (couples meta to the server-only module — meta also runs on client navigations).
+Why: production behavior is unchanged (merchant's saved admin language wins, then session locale, then en); the harness branch is the only place a URL locale can select a non-merchant locale, and the harness is inert outside NODE_ENV=test.
+Risk if wrong: a future screen forgetting its `meta` export loses its title — axe runs per screen in e2e and catches it.
+Evidence: integration tests (ui-routes.test.ts) cover the three locale-resolution cases and both title locales; e2e `every string is translated` + axe suites green in both projects.
+Status: Verified

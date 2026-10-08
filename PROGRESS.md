@@ -1,6 +1,6 @@
 # ShelfCheck — Build Progress
 
-Status: **Phases 0-7 complete (watchers + auto-tag). Next: Phase 8 (UI I: dashboard, onboarding, ui-harness, Playwright).**
+Status: **Phases 0-8 complete (UI I: dashboard + onboarding, UI harness, Playwright e2e green in en + en-XA). Next: Phase 9 (UI II: issues list/detail, rules, settings, plans, CSV export).**
 
 ## Resume protocol
 1. Read `PROGRESS.md` (this file), then `DECISIONS.md` (titles), then the current phase in `docs/SPEC.md`.
@@ -54,10 +54,20 @@ Status: **Phases 0-7 complete (watchers + auto-tag). Next: Phase 8 (UI I: dashbo
 - `tests/helpers/shopify-test-env.ts` — first-import env bootstrap (SHOPIFY_APP_URL/API_KEY/API_SECRET/SCOPES) because `app/shopify.server.ts` evaluates `shopifyApp()` at import time and throws on an empty appUrl.
 - `npm run verify` full gate green: 57 unit + 45 integration (was 28), i18n 0 errors/10 warnings, typecheck+lint clean, RSS 261 MB (< 300 MB), secrets:check clean (107 files).
 
+## Phase 8: UI I — dashboard, onboarding, UI harness, Playwright (this commit)
+- **Dashboard (`app/routes/app._index.tsx`)**: all aggregates from the stored scan row (health score + band, counts by severity/type, scan status, plan usage incl. over-cap, 8-scan trend, scan-now gate); onboarding checklist branch for fresh installs. Components: HealthScoreCard, IssueCountCards, ScanStatus, PlanUsage, OverCapBanner, TrendChart, OnboardingChecklist (Polaris web components, `s-*`).
+- **`app/routes/app.scan.tsx`**: GET latest status + gate, POST start (gated, rate-limited, one-active-scan guard).
+- **Document titles** are localized (`app.documentTitle` key + per-route `meta` reading the layout loader's messages) — no hard-coded strings, fixes axe `document-title` on every screen.
+- **UI harness (`app/lib/ui-harness.server.ts`)**: inert unless `NODE_ENV=test` + `UI_HARNESS=1`; seeds two fixture shops (completed scans + open issues; fresh install with queued first scan). The harness honors `?locale=en-XA` so Playwright exercises the generated pseudo catalog (production `resolveLocale` never yields the test-only locale, D-38).
+- **Production entry**: `npm start` = `tsx server/index.ts` — real Express with `/healthz` (DB reachability, no secrets), security headers (nosniff, Referrer-Policy, CSP frame-ancestors admin), static asset serving for `build/client` (hashed assets immutable; this was missing — every `/assets/*` 404'd into the RR handler and the app never hydrated, D-37), RR7 catch-all via `app.all("*")` (Express 4/path-to-regexp v0 requires exactly `"*"` — `*any`/`/{*splat}` compile to never-matching patterns, D-36), in-process worker drain (off under UI_HARNESS/Playwright), graceful SIGTERM (close → 10s drain → disconnect → exit 0).
+- **SSR bug fixed (D-35)**: the RR Vite plugin stubs `*.client.*` modules in the server bundle (`const I18nProvider = void 0`), so `i18n.client.tsx` was renamed `i18n.context.tsx` and its 7 importers updated. Never name a server-imported module `*.client.*`.
+- **Playwright (`playwright.config.ts`, `tests/e2e/dashboard.spec.ts`)**: two projects (en, en-XA) against the real built app through the prod Express entry + test DB; SSR-never-blank probe, English-string assertions (en only), missing-key-marker + accented-pseudo assertions (en-XA), axe WCAG2AA on dashboard + onboarding in both locales, horizontal-overflow at 375px and 1280px. 16 tests: 13 pass, 3 skip by design (English-string tests skip in the pseudo project).
+- **Integration (12 tests, `tests/integration/ui-routes.test.ts`)**: dashboard loader aggregates, onboarding branch, layout locale resolution (English default, harness-only pseudo, merchant language wins), document-title meta in en + en-XA, scan resource GET/POST + gate rejections.
+- `npm run verify` green: i18n 0 errors (12 locales, en 220 strings), typecheck + lint clean, 57 unit + 77 integration, secrets:check clean; e2e green via `npm run test:e2e`.
+
 ## Next
-1. Phase 8: UI I — `app._index` dashboard + onboarding, `app.scan` resource route, dashboard components, `ui-harness.server.ts`, Playwright config + e2e specs (en, en-XA), axe.
-2. Phase 9: UI II — issues list/detail, rules, settings, plans, CSV export.
-3. Phases 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script, acceptance report).
+1. Phase 9: UI II — issues list/detail, rules, settings, plans, CSV export.
+2. Phases 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script, acceptance report).
 
 ## Phase 7 (this commit)
 - Watchers: `app/webhooks/product-sync.server.ts` (cursor-paged single-product read mirroring the bulk query, fingerprint loop guard, targeted duplicate re-check over old+new values, value-scoped resolution), `app/webhooks/inventory-sync.server.ts` (item→variants mapping, only PUBLISHED_ZERO_INVENTORY re-evaluated), routes `webhooks.products.tsx` + `webhooks.inventory-levels.update.tsx`.
