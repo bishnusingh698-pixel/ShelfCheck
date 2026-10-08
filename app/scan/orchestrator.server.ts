@@ -266,6 +266,20 @@ export async function runDetection(params: {
     "scan completed",
   );
 
+  // Auto-tag runs after a completed scan only (never from webhook-driven
+  // work): the fingerprint check in product-sync is the loop guard (D-31).
+  if (params.settings.autoTag === true) {
+    await enqueue(
+      {
+        kind: "autotag_run",
+        payload: { shopId, scanId },
+        shopId,
+        dedupeKey: `autotag:${shopId}:${scanId}`,
+      },
+      client,
+    );
+  }
+
   // Enqueue notifications for newly opened issues (digest/alert jobs check plan).
   if (opened > 0) {
     await enqueue(

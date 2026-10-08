@@ -295,6 +295,7 @@ Evidence: node_modules/@shopify/shopify-api/dist/cjs/lib/webhooks/registry.js:10
 Status: Pending user feedback
 
 ## D-30: Prisma P2025 tolerated where shop/redact erases the row being updated
+
 Type: decision
 Phase: 3
 Choice: Added `isRecordNotFound` (Prisma code P2025) to queue.server.ts next to `isUniqueViolation`, and used it to tolerate a vanished row in three spots: `completeJob` and `failJob` (shop/redact cascade-deletes the shop jobs WHILE the webhook_process job is running - completing that job is then impossible and unnecessary; the erasure is the outcome), and the post-processor bookkeeping `webhookEvent.update` in `processWebhookEvent` (shop/redact deletes the event row itself; erasure wins over bookkeeping).
@@ -302,4 +303,44 @@ Alternatives considered: (a) exclude webhookEvent/Job rows from redaction - GDPR
 Why: P2025 there is not an error but the success path of GDPR erasure; swallowing it exactly at these three update sites keeps the queue clean without weakening erasure. All other P2025 occurrences still propagate.
 Risk if wrong: a genuine bookkeeping bug could be masked as a redaction - the catch is scoped to the single-row update by known id after the processor ran, so collateral is nil.
 Evidence: tests/integration/webhooks.test.ts "the compliance route accepts and processes all three topics" (threw PrismaClientKnownRequestError P2025 before the fix, passes after); prisma/schema.prisma Session/WebhookEvent/Job shopDomain/shopId cascade relations.
+Status: Pending user feedback
+
+## D-31: Auto-tag runs only after scans; the product-sync fingerprint check is the loop guard
+Type: decision
+Phase: 7
+Choice: `autotag_run` jobs are enqueued exclusively from the scan-completion path (orchestrator). Webhook-driven product syncs never write to Shopify: they upsert `variant_index` rows and re-run detection only. Product tags are not fingerprint inputs, so the `products/update` webhook fired by a `productUpdate(tags)` write recomputes identical fingerprints and the sync becomes a no-op (no detection, no further writes). Belt and braces: `applyAutoTags` reads current tags first and skips the write when `shelfcheck-fix` is already present.
+Alternatives considered: running auto-tag from the webhook path too (spec-permitted when fingerprints changed); writing tags unconditionally.
+Why: acceptance 7 requires a test that counts handler invocations and Shopify writes — the scan-only trigger plus the unchanged-fingerprint guard makes the loop structurally impossible, and the test proves exactly one Shopify write across the whole tag→webhook→sync→tag sequence.
+Risk if wrong: issues found only by webhook watchers would not be tagged until the next scan (Pro plans scan daily at most, so the delay is bounded by one day).
+Evidence: tests/integration/watchers.test.ts ("tags products with open issues exactly once and never loops": writeTargets.length === 1, executor2.writes === 0).
+Status: Pending user feedback
+
+## D-32: Duplicate re-checks upsert every member of a touched group; resolution is value-scoped
+Type: decision
+Phase: 7
+Choice: `syncProduct` upserts findings for ALL members of any SKU/barcode group whose value was involved (old or new), and resolves duplicate issues by group value across the whole shop — not just the product's own variants. Row-rule resolution stays scoped to the product's variants (including vanished ones).
+Alternatives considered: resolving only this product's issues (leaves the other member of a dissolved duplicate group open until its own event); global re-detection (defeats the point of targeted checks).
+Why: acceptance 2 expects a copied SKU to open DUPLICATE_SKU for BOTH members, and acceptance 3 expects BOTH to resolve when the copy is fixed. The other member often has no webhook of its own, so a product-scoped resolution would leave stale open issues indefinitely.
+Risk if wrong: an issue could be resolved while its group still has duplicates if a value string collides across SKU and barcode namespaces — prevented by resolving SKU issues only against SKU values and barcode issues only against barcode values.
+Evidence: tests/integration/watchers.test.ts acceptance 2/3 tests.
+Status: Pending user feedback
+
+## D-33: Debounce/coalesce via dedupe key + run_at postponement, not job replacement
+Type: decision
+Phase: 7
+Choice: bursts of products/* webhooks enqueue ONE pending `product_sync` job per product (dedupe key `product_sync:<shopId>:<gid>`); later webhooks in the window only postpone `run_at` (30 s sliding window). Inventory updates do the same per item (5 s) and overwrite the pending job's payload with the freshest `available`.
+Alternatives considered: deleting and recreating the pending job (race-prone: two concurrent webhooks could both see "no pending job"); a per-product in-memory timer (dies with the free instance).
+Why: the partial unique index on pending dedupe keys makes "at most one pending job" a database guarantee; `updateMany` postponement is idempotent under concurrent delivery, and the last value always wins because the payload is refreshed in place.
+Risk if wrong: a webhook storm could postpone a sync indefinitely (thundering edits); bounded because Shopify retries and admin edits are human-paced. Noted as an acceptable trade-off.
+Evidence: tests/integration/watchers.test.ts ("coalesces a burst of products/update webhooks into one pending sync", "coalesces repeated updates per item into one pending job with the freshest value").
+Status: Pending user feedback
+
+## D-34: product sync read-back query mirrors the frozen bulk query (incl. availablePublicationsCount, D-5)
+Type: assumption
+Phase: 7
+Choice: `PRODUCT_SYNC_QUERY` reuses exactly the field set verified for the bulk query (docs/api-notes.md §4), including `availablePublicationsCount` and variant `media { edges { node { id } } }`, but through `product(id:) { variants(first: 100, after: $cursor) }` with cursor pagination (max 10 pages ≈ 1,000 variants per product). REST webhook payloads carry a numeric product id, so the processor builds the GID from `admin_graphql_api_id` when present, else `gid://shopify/Product/<id>`.
+Alternatives considered: a REST products GET (different field semantics, no inventoryItem measurement); fetching all variants without a cap.
+Why: identical detector inputs for scan and watcher paths; one verification trail (D-5) covers both. Pagination handles products with more than 100 variants.
+Risk if wrong: if `ProductVariant.media` (or `availablePublicationsCount`) does not exist on the 2026-07 non-bulk schema, live watcher syncs fail — isolated behind the `PRODUCT_SYNC_QUERY` constant and `fetchProductVariants`, and recorded as pending live verification in HUMAN_STEPS.md §7.
+Evidence: unverified live (no dev store credentials in this environment); isolated in app/webhooks/product-sync.server.ts.
 Status: Pending user feedback

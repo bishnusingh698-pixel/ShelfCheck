@@ -1,6 +1,6 @@
 # ShelfCheck — Build Progress
 
-Status: **Phases 0-6 + encrypting session storage complete; next commit closes the session-storage/API-pin packet. Phase 3 remainder (webhook intake/uninstall/redact/subscription routes), then Phases 7-13.**
+Status: **Phases 0-7 complete (watchers + auto-tag). Next: Phase 8 (UI I: dashboard, onboarding, ui-harness, Playwright).**
 
 ## Resume protocol
 1. Read `PROGRESS.md` (this file), then `DECISIONS.md` (titles), then the current phase in `docs/SPEC.md`.
@@ -55,8 +55,16 @@ Status: **Phases 0-6 + encrypting session storage complete; next commit closes t
 - `npm run verify` full gate green: 57 unit + 45 integration (was 28), i18n 0 errors/10 warnings, typecheck+lint clean, RSS 261 MB (< 300 MB), secrets:check clean (107 files).
 
 ## Next
-1. Phase 7: product-sync, inventory-sync, autotag loop-protection tests (acceptance 2/3/6/7/9) — registers `products/create|update|delete`, `inventory_levels/update` processors (Phase 7 per spec).
-2. Phases 8-9 (UI routes/components + UI harness), 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script).
+1. Phase 8: UI I — `app._index` dashboard + onboarding, `app.scan` resource route, dashboard components, `ui-harness.server.ts`, Playwright config + e2e specs (en, en-XA), axe.
+2. Phase 9: UI II — issues list/detail, rules, settings, plans, CSV export.
+3. Phases 10-11 (Resend digest, Telegram), 12 (10 locales + listings), 13 (hardening, live-acceptance script, acceptance report).
+
+## Phase 7 (this commit)
+- Watchers: `app/webhooks/product-sync.server.ts` (cursor-paged single-product read mirroring the bulk query, fingerprint loop guard, targeted duplicate re-check over old+new values, value-scoped resolution), `app/webhooks/inventory-sync.server.ts` (item→variants mapping, only PUBLISHED_ZERO_INVENTORY re-evaluated), routes `webhooks.products.tsx` + `webhooks.inventory-levels.update.tsx`.
+- Auto-tag: `app/autotag/autotag.server.ts` — `productUpdate(tags)` add/remove of `shelfcheck-fix`, gated on opt-in + Pro + `write_products`, read-before-write; `autotag_run` job enqueued by the orchestrator after completed scans only (D-31).
+- Debounce: products 30 s sliding window via dedupe key + `run_at` postponement; inventory 5 s coalescing with freshest payload (D-33).
+- `tests/integration/watchers.test.ts` (20 tests) — acceptance 2, 3, 6, 7 [AUTO] green; Free-plan no-op; untracked/continue-selling never flagged; deletion resolves.
+- Integration suite now 65 tests (was 45). Phase report: `docs/phase-reports/phase-7.md`. Decisions D-31…D-34.
 
 ## Verify command
 ```
@@ -64,9 +72,9 @@ export DATABASE_URL="postgresql://openhands:openhands@127.0.0.1:5432/shelfcheck_
 export TEST_DATABASE_URL="$DATABASE_URL"
 export ENCRYPTION_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
 export SIGNING_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
-npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit (57), integration (45), secrets:check
+npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit (57), integration (65), secrets:check
 ```
-Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 57 unit + 45 integration passed (webhooks 17, queue 13, session-storage 8, scan-engine, jsonl-memory), RSS 261 MB, secrets:check clean (107 files).
+Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 57 unit + 65 integration passed (webhooks 17, watchers 20, queue 13, session-storage 8, scan-engine, jsonl-memory), RSS 265 MB, secrets:check clean (122 files).
 
 ## Known issues / rate-limit incidents
 - None. (Model-request budget: target <=30/min, batching tool calls.)
