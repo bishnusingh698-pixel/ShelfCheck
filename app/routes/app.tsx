@@ -43,6 +43,10 @@ function AppNav() {
   return (
     <s-app-nav>
       <s-link href="/app">{t("nav.dashboard")}</s-link>
+      <s-link href="/app/issues">{t("nav.issues")}</s-link>
+      <s-link href="/app/rules">{t("nav.rules")}</s-link>
+      <s-link href="/app/settings">{t("nav.settings")}</s-link>
+      <s-link href="/app/plans">{t("nav.plans")}</s-link>
     </s-app-nav>
   );
 }

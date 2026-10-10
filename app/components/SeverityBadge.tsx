@@ -1,7 +1,7 @@
 import { useI18n } from "../i18n/i18n.context";
 
-/** Severity as text badge with an icon — never color alone (WCAG 2.1 AA). */
-export function SeverityBadge({ severity }: { severity: "high" | "medium" | "low" }) {
+/** Severity tone; unknown values render as info (defensive against bad rows). */
+export function SeverityBadge({ severity }: { severity: string }) {
   const { t } = useI18n();
   const tone = severity === "high" ? "critical" : severity === "medium" ? "warning" : "info";
   const icon = severity === "high" ? "!" : severity === "medium" ? "-" : "·";

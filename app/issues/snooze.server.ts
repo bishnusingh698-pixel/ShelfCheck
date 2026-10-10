@@ -1,20 +1,14 @@
 import type { PrismaClient } from "@prisma/client";
 
+import { snoozeUntil, type SnoozeDays } from "./snooze.js";
+
+export { SNOOZE_DAYS, isSnoozeDays, snoozeUntil } from "./snooze.js";
+export type { SnoozeDays } from "./snooze.js";
+
 /**
  * Snooze lifecycle: snooze (7/30/90 days), unsnooze, reopen expired.
  * Expired snoozes reopen automatically on each tick (no per-row timers).
  */
-
-export const SNOOZE_DAYS = [7, 30, 90] as const;
-export type SnoozeDays = (typeof SNOOZE_DAYS)[number];
-
-export function snoozeUntil(days: SnoozeDays, now = new Date()): Date {
-  return new Date(now.getTime() + days * 86_400_000);
-}
-
-export function isSnoozeDays(value: number): value is SnoozeDays {
-  return (SNOOZE_DAYS as readonly number[]).includes(value);
-}
 
 export async function snoozeIssue(
   shopId: string,

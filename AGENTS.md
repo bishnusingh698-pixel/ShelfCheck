@@ -10,6 +10,8 @@ Read order for any session: `PROGRESS.md` → `DECISIONS.md` (titles) → curren
 4. **`en-XA` (pseudo locale) is intentionally absent from `SUPPORTED_LOCALES`**; only the UI harness (`NODE_ENV=test` + `UI_HARNESS=1`) honors `?locale=en-XA` in `app/routes/app.tsx`. (D-38)
 5. The sandbox resets between sessions: reinstall/start PostgreSQL, recreate `shelfcheck_test` DB, `npx prisma migrate deploy`, export env keys (`env.server.ts` reads `process.env` only; keys ≥ 32 bytes, `v1:`+base64). See PROGRESS.md "Environment gotchas".
 6. Tests: `npm run verify` = i18n:pseudo → i18n:check → typecheck → lint → fixtures:generate → unit → integration → secrets:check. E2E runs separately as `npm run test:e2e` (Playwright boots the real built app through `tsx server/index.ts`). i18n:check's 10 "locale file missing" warnings are expected until Phase 12.
+7. **`Response.text()` silently strips a leading UTF-8 BOM** (fetch spec UTF-8 decode), so a BOM export looks BOM-less through `res.text()`. Assert on raw bytes (`arrayBuffer()` → EF BB BF) or decode with `new TextDecoder("utf-8", { ignoreBOM: true })`. The CSV route DOES emit the BOM — the test reader was wrong, not the route. (Phase 9)
+8. **Postgres text ops treat NULL as "unknown", not empty**: `NULL || x` yields NULL and aggregates skip NULL inputs. In merged-view SQL (variant index + issue-details fallback) COALESCE each ingredient separately — e.g. `COALESCE(v."skuRaw", i."details"->>'sku')` per column, never `COALESCE(v."skuRaw" || i."details"->>'sku', …)` — or rows with NULL columns silently drop out of filters/search. (Phase 9)
 
 ## Conventions
 - Commit per work packet, phase-titled (`Phase 8: …`), with `npm run verify` green; otherwise prefix `wip:` and note it in PROGRESS.md.

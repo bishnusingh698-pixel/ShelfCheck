@@ -105,12 +105,20 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
     productGid: string;
     productTitle: string;
     sku: string | null;
+    vendor?: string | null;
+    variantTitle?: string | null;
+    barcode?: string | null;
+    groupKey?: string;
+    status?: string;
+    snoozedUntil?: Date;
   }> = [
-    { type: "MISSING_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h101", productGid: "gid://shopify/Product/h1", productTitle: "Harness High Widget", sku: null },
-    { type: "MISSING_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h102", productGid: "gid://shopify/Product/h1", productTitle: "Harness High Widget", sku: null },
-    { type: "MISSING_BARCODE", severity: "medium", variantGid: "gid://shopify/ProductVariant/h201", productGid: "gid://shopify/Product/h2", productTitle: "Harness Medium Widget", sku: "MW-1" },
-    { type: "MISSING_BARCODE", severity: "medium", variantGid: "gid://shopify/ProductVariant/h202", productGid: "gid://shopify/Product/h2", productTitle: "Harness Medium Widget", sku: "MW-2" },
-    { type: "MISSING_WEIGHT", severity: "low", variantGid: "gid://shopify/ProductVariant/h301", productGid: "gid://shopify/Product/h3", productTitle: "Harness Low Widget", sku: "LW-1" },
+    { type: "MISSING_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h101", productGid: "gid://shopify/Product/h1", productTitle: "Harness High Widget", sku: null, vendor: "HarnessVendor", variantTitle: "Small" },
+    { type: "MISSING_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h102", productGid: "gid://shopify/Product/h1", productTitle: "Harness High Widget", sku: null, vendor: "HarnessVendor", variantTitle: "Large" },
+    { type: "MISSING_BARCODE", severity: "medium", variantGid: "gid://shopify/ProductVariant/h201", productGid: "gid://shopify/Product/h2", productTitle: "Harness Medium Widget", sku: "MW-1", vendor: "OtherVendor", variantTitle: null, barcode: null },
+    { type: "MISSING_BARCODE", severity: "medium", variantGid: "gid://shopify/ProductVariant/h202", productGid: "gid://shopify/Product/h2", productTitle: "Harness Medium Widget", sku: "MW-2", vendor: "OtherVendor", variantTitle: null, barcode: null },
+    { type: "MISSING_WEIGHT", severity: "low", variantGid: "gid://shopify/ProductVariant/h301", productGid: "gid://shopify/Product/h3", productTitle: "Harness Low Widget", sku: "LW-1", vendor: "HarnessVendor", variantTitle: null, barcode: "123456789012", status: "snoozed", snoozedUntil: new Date(now + 7 * 86_400_000) },
+    { type: "DUPLICATE_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h401", productGid: "gid://shopify/Product/h4", productTitle: "Harness Dup Widget A", sku: "DUP-1", vendor: "HarnessVendor", variantTitle: null, groupKey: "dup-1" },
+    { type: "DUPLICATE_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h402", productGid: "gid://shopify/Product/h5", productTitle: "Harness Dup Widget B", sku: "DUP-1", vendor: "OtherVendor", variantTitle: null, groupKey: "dup-1" },
   ];
   for (const issue of fixtureIssues) {
     await client.issue.create({
@@ -120,9 +128,16 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
         severity: issue.severity,
         variantGid: issue.variantGid,
         productGid: issue.productGid,
-        groupKey: "",
-        details: { product_title: issue.productTitle, sku: issue.sku } as never,
-        status: "open",
+        groupKey: issue.groupKey ?? "",
+        details: {
+          product_title: issue.productTitle,
+          sku: issue.sku,
+          vendor: issue.vendor ?? null,
+          variant_title: issue.variantTitle ?? null,
+          barcode: issue.barcode ?? null,
+        } as never,
+        status: issue.status ?? "open",
+        snoozedUntil: issue.snoozedUntil ?? null,
         firstSeenScanId: "seed",
         lastSeenScanId: "seed",
       },
