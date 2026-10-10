@@ -59,6 +59,14 @@ const SAVE_INTENTS = z.discriminatedUnion("intent", [
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const shop = await requireAdminShopContext(request);
+  // Delivery problems from the Resend webhook (spec <notifications>):
+  // recent bounced / failed / complained email sends, newest first.
+  const deliveryProblems = await db.notificationLog.findMany({
+    where: { shopId: shop.id, channel: "email", status: { in: ["bounced", "failed", "complained"] } },
+    orderBy: { sentAt: "desc" },
+    take: 5,
+    select: { status: true, errorCode: true, sentAt: true, periodKey: true },
+  });
   return {
     settings: shop.settings,
     scopes: shop.scopes,
@@ -70,6 +78,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       autoTag: featureEnabled(shop.plan, "autoTag"),
       telegram: featureEnabled(shop.plan, "telegram"),
     },
+    deliveryProblems,
   };
 }
 
@@ -263,22 +272,39 @@ export default function SettingsRoute() {
 
       <s-section heading={t("settings.digest.title")}>
         {data.featureEnabled.digest ? (
-          <form method="post" action="/app/settings">
+          <>
+            <form method="post" action="/app/settings">
+              <s-stack gap="base">
+                <input type="hidden" name="intent" value="digest" />
+                <input type="checkbox" id="digestEnabled" name="enabled" defaultChecked={digest?.enabled ?? false} />
+                <label htmlFor="digestEnabled">{t("settings.digest.enabled")}</label>
+                <label htmlFor="digestEmail">{t("settings.digest.email")}</label>
+                <input id="digestEmail" name="email" type="email" defaultValue={digest?.email ?? ""} />
+                <label htmlFor="digestDay">{t("settings.digest.day")}</label>
+                <input id="digestDay" name="day" type="number" min={0} max={6} defaultValue={digest?.day ?? 1} />
+                <label htmlFor="digestHour">{t("settings.digest.hour")}</label>
+                <input id="digestHour" name="hour" type="number" min={0} max={23} defaultValue={digest?.hour ?? 9} />
+                <input type="checkbox" id="digestSkip" name="skipWhenEmpty" defaultChecked={digest?.skipWhenEmpty ?? true} />
+                <label htmlFor="digestSkip">{t("settings.digest.skipWhenEmpty")}</label>
+                <s-button type="submit">{t("common.save")}</s-button>
+              </s-stack>
+            </form>
             <s-stack gap="base">
-              <input type="hidden" name="intent" value="digest" />
-              <input type="checkbox" id="digestEnabled" name="enabled" defaultChecked={digest?.enabled ?? false} />
-              <label htmlFor="digestEnabled">{t("settings.digest.enabled")}</label>
-              <label htmlFor="digestEmail">{t("settings.digest.email")}</label>
-              <input id="digestEmail" name="email" type="email" defaultValue={digest?.email ?? ""} />
-              <label htmlFor="digestDay">{t("settings.digest.day")}</label>
-              <input id="digestDay" name="day" type="number" min={0} max={6} defaultValue={digest?.day ?? 1} />
-              <label htmlFor="digestHour">{t("settings.digest.hour")}</label>
-              <input id="digestHour" name="hour" type="number" min={0} max={23} defaultValue={digest?.hour ?? 9} />
-              <input type="checkbox" id="digestSkip" name="skipWhenEmpty" defaultChecked={digest?.skipWhenEmpty ?? true} />
-              <label htmlFor="digestSkip">{t("settings.digest.skipWhenEmpty")}</label>
-              <s-button type="submit">{t("common.save")}</s-button>
+              <h3>{t("settings.digest.bounces")}</h3>
+              {data.deliveryProblems.length === 0 ? (
+                <s-badge tone="success">{t("settings.digest.none")}</s-badge>
+              ) : (
+                <ul>
+                  {data.deliveryProblems.map((problem) => (
+                    <li key={`${problem.periodKey}-${problem.status}`}>
+                      {new Date(problem.sentAt).toISOString().slice(0, 10)} · {problem.status}
+                      {problem.errorCode ? ` · ${problem.errorCode}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </s-stack>
-          </form>
+          </>
         ) : (
           <LockedFeature message={t("plans.locked.digest")} />
         )}

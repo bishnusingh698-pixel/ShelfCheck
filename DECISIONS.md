@@ -385,3 +385,32 @@ Why: production behavior is unchanged (merchant's saved admin language wins, the
 Risk if wrong: a future screen forgetting its `meta` export loses its title — axe runs per screen in e2e and catches it.
 Evidence: integration tests (ui-routes.test.ts) cover the three locale-resolution cases and both title locales; e2e `every string is translated` + axe suites green in both projects.
 Status: Verified
+
+## D-39: Resend webhook verified manually (Svix scheme) and deduped on svix-id
+Type: implementation
+Phase: 10
+Choice: `resend.webhook.tsx` verifies Svix-style signatures by hand (HMAC-SHA256 over `<svix-id>.<svix-timestamp>.<raw body>`, `whsec_<base64>` key material, 5-minute tolerance, constant-time compare against every `v1,` candidate) instead of adding the `svix` npm dependency; delivery events are deduped by inserting `svix-id` into `webhook_events.webhookId` (unique) and acking duplicates with 200.
+Alternatives considered: the `svix` package (extra dependency for one HMAC; api-notes §12 documents the manual recipe); no dedupe (Resend retries would double-mark bounces).
+Why: the same raw-body + constant-time discipline as the Shopify webhook layer, zero new deps, and the dedupe key already exists in the schema.
+Risk if wrong: a rotated secret or clock skew >5 min rejects valid deliveries — Resend retries, nothing is lost.
+Evidence: notifications.test.ts — stale timestamp rejected, wrong-key signature rejected, replayed svix-id acked as duplicate exactly once.
+Status: Verified
+
+## D-40: The send budget is accounted from NotificationLog, and overflow is deferred by re-enqueue
+Type: implementation
+Phase: 10
+Choice: daily/monthly budgets count `NotificationLog(channel=email, status=sent)` in UTC calendar windows (no new counter table), and `sendDueDigests` caps new `digest_send` jobs per tick; an over-budget `runDigestSend` re-enqueues itself with a future `runAt` and the same `dedupeKey` instead of failing — deferred, never dropped. Period idempotency is the `NotificationLog` unique key `(shopId, channel, kind, periodKey)`; `failed` rows are the only re-attemptable state. Only genuinely new jobs consume the per-tick budget (a duplicate `enqueue` is a no-op and is not counted).
+Alternatives considered: a dedicated counter row (races across ticks for little gain); dropping the send and letting next week's digest pick it up (violates the spec's "never dropped silently"); retrying inside the job (blocks the tick worker on Resend's clock).
+Why: at-least-once queue + unique-key guard + count-then-send is monotone under the sequential drain; per-tick smoothing caps the blast radius of any single tick.
+Risk if wrong: long-lived backlogs at scale would take multiple ticks to drain — acceptable by design (smoothing is the point).
+Evidence: notifications.test.ts — budget=1 defers the second shop with a future runAt + stable dedupeKey, perTick caps at 2 with the third picked up next tick, second send for the same period is `already-sent` with one log row.
+Status: Verified
+
+## D-41: digestPeriodKey uses the canonical ISO algorithm; 2026 is a 53-week year
+Type: bug fix
+Phase: 10
+Choice: the original week math anchored on a fixed Jan-4 epoch, which mislabeled weeks (Oct 8 2026 computed as 2026-W40). Replaced with the canonical method: shift the shop-local date to its Thursday, then count weeks from Jan 1 of that Thursday's year. Verified across the year boundary: Jan 2 2027 is 2026-W53 (2026 is a long year), Jan 4 2027 is 2027-W01; time-zone shifts fold to the local calendar date before the math.
+Why: a wrong period key silently collides two different weeks into one NotificationLog row (or splits one), so idempotency would lock out a real digest or double-send one.
+Risk if wrong: none remaining — assertions cover mid-week, week boundary, TZ fold, and the 53-week boundary.
+Evidence: notifications.test.ts "digest period keys" (5 instants, 2 zones).
+Status: Verified
