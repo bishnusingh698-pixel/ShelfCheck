@@ -23,6 +23,7 @@ database.sqlite
 tests/fixtures/large-50k.jsonl
 locales/en-XA.json
 playwright-report/
+test-results/
 yarn.lock
 pnpm-lock.yaml
 

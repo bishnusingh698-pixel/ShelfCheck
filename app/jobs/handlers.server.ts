@@ -14,8 +14,8 @@ export const PRODUCT_SYNC_SCHEMA = z.object({
 
 export const INVENTORY_SYNC_SCHEMA = z.object({
   shopId: z.string(),
-  inventoryItemId: z.number(),
-  available: z.number(),
+  inventoryItemId: z.union([z.number(), z.string()]),
+  available: z.number().nullable().optional(),
 });
 
 export const SCAN_START_SCHEMA = z.object({
@@ -37,6 +37,11 @@ export const TELEGRAM_ALERT_SCHEMA = z.object({
   scanId: z.string().optional(),
 });
 
+export const AUTOTAG_RUN_SCHEMA = z.object({
+  shopId: z.string(),
+  scanId: z.string().optional(),
+});
+
 export const WEBHOOK_PROCESS_SCHEMA = z.object({
   webhookEventId: z.string(),
 });
@@ -49,6 +54,7 @@ export type JobKind =
   | "digest_send"
   | "notify_new_issues"
   | "telegram_alert"
+  | "autotag_run"
   | "webhook_process";
 
 export interface JobHandlers {
@@ -59,6 +65,7 @@ export interface JobHandlers {
   digest_send?: JobHandler;
   notify_new_issues?: JobHandler;
   telegram_alert?: JobHandler;
+  autotag_run?: JobHandler;
   webhook_process?: JobHandler;
 }
 

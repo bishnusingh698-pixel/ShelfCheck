@@ -295,6 +295,7 @@ Evidence: node_modules/@shopify/shopify-api/dist/cjs/lib/webhooks/registry.js:10
 Status: Pending user feedback
 
 ## D-30: Prisma P2025 tolerated where shop/redact erases the row being updated
+
 Type: decision
 Phase: 3
 Choice: Added `isRecordNotFound` (Prisma code P2025) to queue.server.ts next to `isUniqueViolation`, and used it to tolerate a vanished row in three spots: `completeJob` and `failJob` (shop/redact cascade-deletes the shop jobs WHILE the webhook_process job is running - completing that job is then impossible and unnecessary; the erasure is the outcome), and the post-processor bookkeeping `webhookEvent.update` in `processWebhookEvent` (shop/redact deletes the event row itself; erasure wins over bookkeeping).
@@ -303,3 +304,113 @@ Why: P2025 there is not an error but the success path of GDPR erasure; swallowin
 Risk if wrong: a genuine bookkeeping bug could be masked as a redaction - the catch is scoped to the single-row update by known id after the processor ran, so collateral is nil.
 Evidence: tests/integration/webhooks.test.ts "the compliance route accepts and processes all three topics" (threw PrismaClientKnownRequestError P2025 before the fix, passes after); prisma/schema.prisma Session/WebhookEvent/Job shopDomain/shopId cascade relations.
 Status: Pending user feedback
+
+## D-31: Auto-tag runs only after scans; the product-sync fingerprint check is the loop guard
+Type: decision
+Phase: 7
+Choice: `autotag_run` jobs are enqueued exclusively from the scan-completion path (orchestrator). Webhook-driven product syncs never write to Shopify: they upsert `variant_index` rows and re-run detection only. Product tags are not fingerprint inputs, so the `products/update` webhook fired by a `productUpdate(tags)` write recomputes identical fingerprints and the sync becomes a no-op (no detection, no further writes). Belt and braces: `applyAutoTags` reads current tags first and skips the write when `shelfcheck-fix` is already present.
+Alternatives considered: running auto-tag from the webhook path too (spec-permitted when fingerprints changed); writing tags unconditionally.
+Why: acceptance 7 requires a test that counts handler invocations and Shopify writes — the scan-only trigger plus the unchanged-fingerprint guard makes the loop structurally impossible, and the test proves exactly one Shopify write across the whole tag→webhook→sync→tag sequence.
+Risk if wrong: issues found only by webhook watchers would not be tagged until the next scan (Pro plans scan daily at most, so the delay is bounded by one day).
+Evidence: tests/integration/watchers.test.ts ("tags products with open issues exactly once and never loops": writeTargets.length === 1, executor2.writes === 0).
+Status: Pending user feedback
+
+## D-32: Duplicate re-checks upsert every member of a touched group; resolution is value-scoped
+Type: decision
+Phase: 7
+Choice: `syncProduct` upserts findings for ALL members of any SKU/barcode group whose value was involved (old or new), and resolves duplicate issues by group value across the whole shop — not just the product's own variants. Row-rule resolution stays scoped to the product's variants (including vanished ones).
+Alternatives considered: resolving only this product's issues (leaves the other member of a dissolved duplicate group open until its own event); global re-detection (defeats the point of targeted checks).
+Why: acceptance 2 expects a copied SKU to open DUPLICATE_SKU for BOTH members, and acceptance 3 expects BOTH to resolve when the copy is fixed. The other member often has no webhook of its own, so a product-scoped resolution would leave stale open issues indefinitely.
+Risk if wrong: an issue could be resolved while its group still has duplicates if a value string collides across SKU and barcode namespaces — prevented by resolving SKU issues only against SKU values and barcode issues only against barcode values.
+Evidence: tests/integration/watchers.test.ts acceptance 2/3 tests.
+Status: Pending user feedback
+
+## D-33: Debounce/coalesce via dedupe key + run_at postponement, not job replacement
+Type: decision
+Phase: 7
+Choice: bursts of products/* webhooks enqueue ONE pending `product_sync` job per product (dedupe key `product_sync:<shopId>:<gid>`); later webhooks in the window only postpone `run_at` (30 s sliding window). Inventory updates do the same per item (5 s) and overwrite the pending job's payload with the freshest `available`.
+Alternatives considered: deleting and recreating the pending job (race-prone: two concurrent webhooks could both see "no pending job"); a per-product in-memory timer (dies with the free instance).
+Why: the partial unique index on pending dedupe keys makes "at most one pending job" a database guarantee; `updateMany` postponement is idempotent under concurrent delivery, and the last value always wins because the payload is refreshed in place.
+Risk if wrong: a webhook storm could postpone a sync indefinitely (thundering edits); bounded because Shopify retries and admin edits are human-paced. Noted as an acceptable trade-off.
+Evidence: tests/integration/watchers.test.ts ("coalesces a burst of products/update webhooks into one pending sync", "coalesces repeated updates per item into one pending job with the freshest value").
+Status: Pending user feedback
+
+
+## D-34: product sync read-back query mirrors the frozen bulk query (incl. availablePublicationsCount, D-5)
+Type: assumption
+Phase: 7
+Choice: `PRODUCT_SYNC_QUERY` reuses exactly the field set verified for the bulk query (docs/api-notes.md §4), including `availablePublicationsCount` and variant `media { edges { node { id } } }`, but through `product(id:) { variants(first: 100, after: $cursor) }` with cursor pagination (max 10 pages ≈ 1,000 variants per product). REST webhook payloads carry a numeric product id, so the processor builds the GID from `admin_graphql_api_id` when present, else `gid://shopify/Product/<id>`.
+Alternatives considered: a REST products GET (different field semantics, no inventoryItem measurement); fetching all variants without a cap.
+Why: identical detector inputs for scan and watcher paths; one verification trail (D-5) covers both. Pagination handles products with more than 100 variants.
+Risk if wrong: if `ProductVariant.media` (or `availablePublicationsCount`) does not exist on the 2026-07 non-bulk schema, live watcher syncs fail — isolated behind the `PRODUCT_SYNC_QUERY` constant and `fetchProductVariants`, and recorded as pending live verification in HUMAN_STEPS.md §7.
+Evidence: unverified live (no dev store credentials in this environment); isolated in app/webhooks/product-sync.server.ts.
+Status: Pending user feedback
+
+## D-35: React Router Vite plugin stubs `*.client.*` modules in the server build
+Type: bug
+Phase: 8
+Choice: `app/i18n/i18n.client.tsx` is renamed `app/i18n/i18n.context.tsx` (all 7 importers updated). Modules whose filename matches `*.client.*` are replaced by empty stubs in the SSR/server bundle by the RR Vite plugin, so the server rendered `<html>` without the i18n provider (`const I18nProvider = void 0`), crashing every server-rendered screen. The name `i18n.context` keeps the client-safety of the module without triggering the stub rule.
+Alternatives considered: keeping the name and loading messages server-side only (breaks the shared `useI18n` consumer API); splitting provider/translations into a `*.server.*` twin (duplicates the code).
+Why: one module, one import surface, works in both Vite module graphs.
+Risk if wrong: any future module imported by server code but named `*.client.*` silently breaks SSR again — recorded here as the standing rule.
+Evidence: server bundle before the fix contained `const I18nProvider = void 0`; e2e SSR-never-blank probe failed for every screen, then passed after the rename (test-results archive, Phase 8 e2e run).
+Status: Verified
+
+## D-36: Express 4 catch-all wildcard must be exactly `*`
+Type: bug
+Phase: 8
+Choice: the custom Express server mounts the React Router handler with `app.all("*")` only. With express 4.21+/path-to-regexp v0, named splat patterns (`*any`, `/*splat`, `/{*splat}`) compile to a pattern that never matches, so every RR route 404s; the bare `*` is the single working catch-all form.
+Alternatives considered: `app.use(handler)` (does not bind body parsing / route order the same way); migrating to Express 5 (template pinned to Express 4 for the Shopify App template).
+Why: `*` is the only form that matches every method+path under path-to-regexp v0; verified with a minimal reproduction (`/tmp/express-test.cjs`) before applying.
+Risk if wrong: upgrading Express (or transitive path-to-regexp) changes wildcard semantics; the e2e suite boots this exact server, so a regression is caught by the SSR-never-blank probe.
+Evidence: pre-fix e2e: all RR routes 404 via `/healthz`-only Express; post-fix: 16/16 e2e green through the same server.
+Status: Verified
+
+## D-37: The custom Express server serves `build/client` itself; hashed assets are immutable
+Type: implementation
+Phase: 8
+Choice: `server/index.ts` mounts `express.static("build/client", { index: false })` BEFORE the RR catch-all, with `Cache-Control: public, max-age=31536000, immutable` for files under `assets/` (content-hashed by Vite) and default revalidation for everything else (favicon, etc.). Unknown paths fall through to the RR handler.
+Alternatives considered: letting the RR handler serve assets (it 404s them — `@react-router/express` does not include a static file layer); a separate CDN/static host (spec deploys one Render service).
+Why: without it every `/assets/*.js|css` 404'd, so the app server-rendered but never hydrated; Playwright passed on SSR alone, which hid the bug until the 404s appeared in the webServer log.
+Risk if wrong: none functionally; cache headers are safe because asset names are content-hashed.
+Evidence: curl of the asset URL from the SSR HTML: 404 before, 200 + immutable after; title tag present in HTML.
+Status: Verified
+
+## D-38: The en-XA pseudo locale renders only under the UI harness; document titles come from messages
+Type: implementation
+Phase: 8
+Choice: `en-XA` stays OUT of `SUPPORTED_LOCALES` (a merchant must never receive pseudo text); `resolveLocale` never yields it. Only the app layout loader, when `uiHarnessActive()` is true, honors `?locale=en-XA` so the Playwright pseudo project can assert the generated catalog (acccented text present, no missing-key markers). Page `<title>`s are localized via `meta` exports that read the layout loader's `messages` (new key `app.documentTitle`: "ShelfCheck — {title}"), satisfying both the no-hard-coded-strings rule and axe `document-title` in every locale.
+Alternatives considered: adding en-XA to SUPPORTED_LOCALES (leaks to merchants); hard-coding a `<title>` in root.tsx (violates spec §<i18n> zero-hard-coded-strings); reading messages inside `meta` from `getMessages` directly (couples meta to the server-only module — meta also runs on client navigations).
+Why: production behavior is unchanged (merchant's saved admin language wins, then session locale, then en); the harness branch is the only place a URL locale can select a non-merchant locale, and the harness is inert outside NODE_ENV=test.
+Risk if wrong: a future screen forgetting its `meta` export loses its title — axe runs per screen in e2e and catches it.
+Evidence: integration tests (ui-routes.test.ts) cover the three locale-resolution cases and both title locales; e2e `every string is translated` + axe suites green in both projects.
+Status: Verified
+
+## D-39: Resend webhook verified manually (Svix scheme) and deduped on svix-id
+Type: implementation
+Phase: 10
+Choice: `resend.webhook.tsx` verifies Svix-style signatures by hand (HMAC-SHA256 over `<svix-id>.<svix-timestamp>.<raw body>`, `whsec_<base64>` key material, 5-minute tolerance, constant-time compare against every `v1,` candidate) instead of adding the `svix` npm dependency; delivery events are deduped by inserting `svix-id` into `webhook_events.webhookId` (unique) and acking duplicates with 200.
+Alternatives considered: the `svix` package (extra dependency for one HMAC; api-notes §12 documents the manual recipe); no dedupe (Resend retries would double-mark bounces).
+Why: the same raw-body + constant-time discipline as the Shopify webhook layer, zero new deps, and the dedupe key already exists in the schema.
+Risk if wrong: a rotated secret or clock skew >5 min rejects valid deliveries — Resend retries, nothing is lost.
+Evidence: notifications.test.ts — stale timestamp rejected, wrong-key signature rejected, replayed svix-id acked as duplicate exactly once.
+Status: Verified
+
+## D-40: The send budget is accounted from NotificationLog, and overflow is deferred by re-enqueue
+Type: implementation
+Phase: 10
+Choice: daily/monthly budgets count `NotificationLog(channel=email, status=sent)` in UTC calendar windows (no new counter table), and `sendDueDigests` caps new `digest_send` jobs per tick; an over-budget `runDigestSend` re-enqueues itself with a future `runAt` and the same `dedupeKey` instead of failing — deferred, never dropped. Period idempotency is the `NotificationLog` unique key `(shopId, channel, kind, periodKey)`; `failed` rows are the only re-attemptable state. Only genuinely new jobs consume the per-tick budget (a duplicate `enqueue` is a no-op and is not counted).
+Alternatives considered: a dedicated counter row (races across ticks for little gain); dropping the send and letting next week's digest pick it up (violates the spec's "never dropped silently"); retrying inside the job (blocks the tick worker on Resend's clock).
+Why: at-least-once queue + unique-key guard + count-then-send is monotone under the sequential drain; per-tick smoothing caps the blast radius of any single tick.
+Risk if wrong: long-lived backlogs at scale would take multiple ticks to drain — acceptable by design (smoothing is the point).
+Evidence: notifications.test.ts — budget=1 defers the second shop with a future runAt + stable dedupeKey, perTick caps at 2 with the third picked up next tick, second send for the same period is `already-sent` with one log row.
+Status: Verified
+
+## D-41: digestPeriodKey uses the canonical ISO algorithm; 2026 is a 53-week year
+Type: bug fix
+Phase: 10
+Choice: the original week math anchored on a fixed Jan-4 epoch, which mislabeled weeks (Oct 8 2026 computed as 2026-W40). Replaced with the canonical method: shift the shop-local date to its Thursday, then count weeks from Jan 1 of that Thursday's year. Verified across the year boundary: Jan 2 2027 is 2026-W53 (2026 is a long year), Jan 4 2027 is 2027-W01; time-zone shifts fold to the local calendar date before the math.
+Why: a wrong period key silently collides two different weeks into one NotificationLog row (or splits one), so idempotency would lock out a real digest or double-send one.
+Risk if wrong: none remaining — assertions cover mid-week, week boundary, TZ fold, and the 53-week boundary.
+Evidence: notifications.test.ts "digest period keys" (5 instants, 2 zones).
+Status: Verified
