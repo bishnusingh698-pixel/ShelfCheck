@@ -7,6 +7,9 @@ import { refreshShopPlan } from "../billing/subscription.server.js";
 import { makeJobExecutor } from "../jobs/executor.server.js";
 import { parseAndDetect, handleFailedOperation } from "../scan/orchestrator.server.js";
 import { readBulkOperation } from "../scan/bulk-operation.server.js";
+import { syncProduct, removeProductVariants, PRODUCT_DEBOUNCE_MS } from "./product-sync.server.js";
+import { syncInventoryItem, INVENTORY_COALESCE_MS } from "./inventory-sync.server.js";
+import { enqueue, isUniqueViolation } from "../jobs/queue.server.js";
 
 /**
  * Webhook topic processors (the async half of the intake). Registered once at
@@ -73,7 +76,144 @@ export async function handleBulkOperationFinish(event: StoredWebhookEvent, clien
   // Non-terminal statuses are impossible in a finish webhook but harmless.
 }
 
-/** Install every lifecycle processor. Called by the production handler map. */
+const PRODUCT_TOPICS = new Set(["products/create", "products/update", "products/delete"]);
+
+/**
+ * Enqueue a debounced product_sync job. The dedupe key holds one PENDING job
+ * per product; when a burst arrives, the pending job's run_at is pushed out
+ * so the LAST write wins and rapid admin edits collapse into one sync.
+ */
+async function enqueueDebouncedProductSync(
+  shopId: string,
+  productGid: string,
+  client: PrismaClient,
+  now: Date,
+): Promise<void> {
+  const runAt = new Date(now.getTime() + PRODUCT_DEBOUNCE_MS);
+  try {
+    await enqueue(
+      {
+        kind: "product_sync",
+        payload: { shopId, productGid, source: "webhook" },
+        shopId,
+        runAt,
+        dedupeKey: `product_sync:${shopId}:${productGid}`,
+      },
+      client,
+    );
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+  }
+  // Sliding debounce: postpone the pending job if the burst continues.
+  await client.job.updateMany({
+    where: { dedupeKey: `product_sync:${shopId}:${productGid}`, status: "pending", runAt: { lt: runAt } },
+    data: { runAt },
+  });
+}
+
+/** products/* processor: debounce per product, then the product_sync job syncs. */
+export async function handleProductTopic(event: StoredWebhookEvent, client: PrismaClient): Promise<void> {
+  const shop = await client.shop.findUnique({ where: { shopDomain: event.shopDomain } });
+  if (!shop) return;
+  // The topic arrives in human form ("products/delete") or the library's
+  // storage form ("PRODUCTS_DELETE") — see intake.server.ts.
+  const isDelete =
+    event.topic === "products/delete" || event.topic === "PRODUCTS_DELETE" || event.topic === "PRODUCTS_DELETE".toLowerCase();
+  const productGid = productGidFromPayload(event.payload);
+  if (!productGid) return;
+
+  if (isDelete) {
+    // Deletion needs no Shopify read-back: drop the rows and resolve issues.
+    await removeProductVariants({ shopId: shop.id, productGid, client });
+    return;
+  }
+  await enqueueDebouncedProductSync(shop.id, productGid, client, new Date());
+}
+
+/**
+ * REST webhook payloads carry a numeric product id (and optionally
+ * admin_graphql_api_id); the sync needs the GID. Accepts both shapes.
+ */
+export function productGidFromPayload(payload: Record<string, unknown>): string | null {
+  const explicit = payload.admin_graphql_api_id;
+  if (typeof explicit === "string" && explicit.startsWith("gid://")) return explicit;
+  const id = payload.id;
+  if (typeof id === "string" && id.startsWith("gid://")) return id;
+  if (typeof id === "number" && Number.isInteger(id)) return `gid://shopify/Product/${id}`;
+  if (typeof id === "string" && /^\d+$/.test(id)) return `gid://shopify/Product/${id}`;
+  return null;
+}
+
+/** inventory_levels/update processor: coalesce per item, throttle per shop. */
+export async function handleInventoryLevelUpdate(
+  event: StoredWebhookEvent,
+  client: PrismaClient,
+): Promise<void> {
+  const shop = await client.shop.findUnique({ where: { shopDomain: event.shopDomain } });
+  if (!shop) return;
+  const inventoryItemId =
+    typeof event.payload.inventory_item_id === "number"
+      ? String(event.payload.inventory_item_id)
+      : typeof event.payload.inventory_item_id === "string"
+        ? event.payload.inventory_item_id
+        : null;
+  const available =
+    typeof event.payload.available === "number"
+      ? event.payload.available
+      : Number.isFinite(Number(event.payload.available))
+        ? Number(event.payload.available)
+        : null;
+  if (!inventoryItemId) return;
+
+  const runAt = new Date(Date.now() + INVENTORY_COALESCE_MS);
+  try {
+    await enqueue(
+      {
+        kind: "inventory_sync",
+        payload: { shopId: shop.id, inventoryItemId, available },
+        shopId: shop.id,
+        runAt,
+        dedupeKey: `inventory_sync:${shop.id}:${inventoryItemId}`,
+      },
+      client,
+    );
+  } catch (error) {
+    if (!isUniqueViolation(error)) throw error;
+  }
+  // Coalesce: keep the freshest available value on the pending job.
+  await client.job.updateMany({
+    where: {
+      dedupeKey: `inventory_sync:${shop.id}:${inventoryItemId}`,
+      status: "pending",
+    },
+    data: { payload: { shopId: shop.id, inventoryItemId, available } as never, runAt },
+  });
+}
+
+/**
+ * Run one debounced product sync (the product_sync job handler calls this).
+ * The executor is injected so tests can stub Shopify.
+ */
+export async function runProductSync(
+  shopId: string,
+  productGid: string,
+  client: PrismaClient,
+): Promise<void> {
+  const executor = await makeJobExecutor(shopId, client);
+  await syncProduct({ shopId, productGid, executor, client });
+}
+
+/** Run one coalesced inventory sync (the inventory_sync job handler). */
+export async function runInventorySync(
+  shopId: string,
+  inventoryItemId: string,
+  available: number | null,
+  client: PrismaClient,
+): Promise<void> {
+  await syncInventoryItem({ shopId, inventoryItemId, available, client });
+}
+
+/** Install every lifecycle + watcher processor. Called by the production handler map. */
 export function registerLifecycleWebhookProcessors(): void {
   registerWebhookProcessor("app/uninstalled", async (event, client) => {
     await uninstallShop(event.shopDomain, client);
@@ -86,4 +226,8 @@ export function registerLifecycleWebhookProcessors(): void {
   registerWebhookProcessor("customers/data_request", acknowledgeCustomerTopic);
   registerWebhookProcessor("customers/redact", acknowledgeCustomerTopic);
   registerWebhookProcessor("bulk_operations/finish", handleBulkOperationFinish);
+  for (const topic of PRODUCT_TOPICS) {
+    registerWebhookProcessor(topic, handleProductTopic);
+  }
+  registerWebhookProcessor("inventory_levels/update", handleInventoryLevelUpdate);
 }

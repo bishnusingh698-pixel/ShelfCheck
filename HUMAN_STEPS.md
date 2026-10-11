@@ -12,7 +12,7 @@ Legend: PD = Shopify Partner Dashboard, Env = `.env` in the project root.
    - Expected: a `client_id` and `client_secret` for the app, and a `<store>.myshopify.com` dev store.
 2. **Neon** — https://neon.tech free plan. Create a project; copy the **pooled** connection string (ends `-pooler.xxx.neon.tech`) and the **direct** string.
    - Expected: `DATABASE_URL` (pooled) and `DIRECT_URL` set in Env; `npm run verify` integration tests pass against Neon when `TEST_DATABASE_URL` is pointed at Neon pooled.
-3. **Resend** — https://resend.com free tier. Add + verify a sending domain (DNS records). Create an API key; create a webhook endpoint pointing at `https://<app-url>/webhooks/resend` and copy the signing secret (`whsec_...`).
+3. **Resend** — https://resend.com free tier. Add + verify a sending domain (DNS records). Create an API key; create a webhook endpoint pointing at `https://<app-url>/resend/webhook` and copy the signing secret (`whsec_...`).
    - Expected: `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `RESEND_FROM` (`ShelfCheck <digest@yourdomain.com>`) in Env.
 4. **Telegram** — create a bot with @BotFather (`/newbot`). Copy the bot token and choose a bot username.
    - Expected: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` in Env. `setWebhook` is done by the app (`POST /telegram/setup` dev route or the settings page does it automatically on connect).

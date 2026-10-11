@@ -1,7 +1,8 @@
 {
   "app": {
     "name": "ShelfCheck",
-    "tagline": "Find and fix catalog problems before they stop a shipment."
+    "tagline": "Find and fix catalog problems before they stop a shipment.",
+    "documentTitle": "ShelfCheck — {title}"
   },
   "auth": {
     "heading": "Log in",
@@ -99,7 +100,11 @@
       "selected": "{count, plural, =0 {No issues selected} one {# issue selected} other {# issues selected}}",
       "newBadge": "New",
       "groupMembers": "All members of this group",
-      "overCapHidden": "{count, plural, one {# issue is beyond your plan's display limit} other {# issues are beyond your plan's display limit}}"
+      "overCapHidden": "{count, plural, one {# issue is beyond your plan's display limit} other {# issues are beyond your plan's display limit}}",
+      "previous": "Previous",
+      "next": "Next",
+      "pageStatus": "Page {page} of {pageCount} ({total} issues)",
+      "actions": "Actions"
     }
   },
   "dashboard": {
@@ -112,6 +117,7 @@
       "critical": "Critical"
     },
     "counts": {
+      "title": "Issues by severity",
       "high": "{count, plural, one {# high-severity issue} other {# high-severity issues}}",
       "medium": "{count, plural, one {# medium-severity issue} other {# medium-severity issues}}",
       "low": "{count, plural, one {# low-severity issue} other {# low-severity issues}}",
@@ -226,7 +232,8 @@
     "issueTypeAny": "Any type",
     "note": "Note (optional)",
     "add": "Add rule",
-    "delete": "Delete"
+    "delete": "Delete",
+    "scopeLabel": "Rule scope"
   },
   "plans": {
     "title": "Plans",
@@ -259,6 +266,14 @@
       "csv": "CSV export",
       "autoTag": "Auto-tag",
       "telegram": "Telegram alerts"
+    },
+    "unlimited": "Unlimited",
+    "yes": "Included",
+    "no": "Not included",
+    "scheduled": {
+      "monthly": "Monthly",
+      "weekly": "Weekly",
+      "daily": "Daily"
     }
   },
   "toast": {

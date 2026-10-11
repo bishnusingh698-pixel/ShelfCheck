@@ -50,7 +50,26 @@ app.get("/healthz", async (_req, res) => {
   }
 });
 
+// --- Static assets (the built client bundle) ---
+// Vite emits content-hashed files under build/client/assets — safe to cache
+// immutably. Anything else (favicon, …) revalidates. Unknown paths fall
+// through to the React Router handler below.
+const clientDir = path.resolve("build/client");
+app.use(
+  express.static(clientDir, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.startsWith(`${path.join(clientDir, "assets")}${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }),
+);
+
 // --- React Router handler for everything else ---
+// Express 4 wildcard: must be exactly "*" — "*any"/"/*splat" compile to a
+// pattern that never matches, which 404s every non-express route (found via
+// the Phase 8 e2e run through this server).
 const buildPath = path.resolve("build/server/index.js");
 if (!existsSync(buildPath)) {
   logger.error({ buildPath }, "React Router server build not found; run `npm run build` first");
@@ -62,7 +81,7 @@ const handler = createRequestHandler({
   build: build as never,
   mode: process.env.NODE_ENV === "production" ? "production" : "development",
 });
-app.all("*any", (req, res, next) => {
+app.all("*", (req, res, next) => {
   void handler(req, res, next);
 });
 
@@ -71,12 +90,18 @@ const server = app.listen(port, () => {
 });
 
 // --- Worker (drains jobs while the instance is awake; correctness never depends on it) ---
-const worker = startWorker({
-  logger,
-  intervalMs: 2000,
-  maxDrainMs: 1500,
-  handler: productionDrainHandler(),
-});
+// Under the UI harness (Playwright) the worker stays off: the fixture keeps a
+// scan queued so screens can render every state, and no job may attempt real
+// Shopify calls for the harness shop.
+const uiHarness = process.env.UI_HARNESS === "1";
+const worker = uiHarness
+  ? null
+  : startWorker({
+      logger,
+      intervalMs: 2000,
+      maxDrainMs: 1500,
+      handler: productionDrainHandler(),
+    });
 
 // --- SIGTERM: stop claiming, drain current job, close DB, exit ---
 let shuttingDown = false;
@@ -87,7 +112,7 @@ const shutdown = async (signal: string) => {
   const forceExit = setTimeout(() => process.exit(1), 30_000);
   forceExit.unref();
   server.close();
-  await stopWorker(worker, { drainMs: 10_000 });
+  if (worker) await stopWorker(worker, { drainMs: 10_000 });
   await db.$disconnect();
   process.exit(0);
 };

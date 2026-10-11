@@ -199,18 +199,20 @@ model Job {
 }
 
 model NotificationLog {
-  id        String   @id @default(cuid())
-  shopId    String
-  channel   String // email | telegram
-  kind      String // digest | alert
-  periodKey String
-  status    String
-  errorCode String?
-  sentAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  shopId      String
+  channel     String // email | telegram
+  kind        String // digest | alert
+  periodKey   String
+  status      String
+  errorCode   String?
+  providerId  String?
+  sentAt      DateTime @default(now())
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, channel, kind, periodKey])
+  @@index([providerId])
 }
 
 model TelegramLinkToken {
