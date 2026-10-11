@@ -11,7 +11,6 @@ export function OnboardingChecklist({ steps }: { steps: OnboardingStep[] }) {
   const labelFor: Record<string, string> = {
     scanRunning: t("dashboard.onboarding.scanRunning"),
     reviewIssues: t("dashboard.onboarding.reviewIssues"),
-    setUpDigest: t("dashboard.onboarding.setUpDigest"),
   };
   return (
     <s-section heading={t("dashboard.onboarding.title")}>

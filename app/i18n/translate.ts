@@ -1,6 +1,6 @@
 /**
- * Pure ICU MessageFormat renderer — shared by the server (loaders, emails,
- * Telegram) and the client. No I/O, no filesystem, no framework.
+ * Pure ICU MessageFormat renderer — shared by the server (loaders)
+ * and the client. No I/O, no filesystem, no framework.
  *
  * Supports {name} placeholders and one level of {count, plural, ...} with
  * CLDR plural categories via Intl.PluralRules. Keys are flat dot-notation

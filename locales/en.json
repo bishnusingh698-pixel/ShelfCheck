@@ -158,7 +158,6 @@
       "title": "Set up ShelfCheck",
       "scanRunning": "First scan running",
       "reviewIssues": "Review your issues",
-      "setUpDigest": "Set up the weekly digest",
       "done": "Done"
     }
   },
@@ -182,28 +181,6 @@
       "acceptNonGtin": "Accept non-GS1 barcodes",
       "acceptNonGtinHelp": "When on, only GS1-length barcodes are checked against the check digit."
     },
-    "digest": {
-      "title": "Weekly email digest",
-      "enabled": "Send me a weekly digest",
-      "email": "Email address",
-      "day": "Day of week",
-      "hour": "Hour of day",
-      "skipWhenEmpty": "Skip when nothing is new",
-      "test": "Send test email",
-      "bounces": "Delivery problems",
-      "none": "None recorded"
-    },
-    "telegram": {
-      "title": "Telegram alerts",
-      "connect": "Connect Telegram",
-      "connectHelp": "Opens Telegram with a one-time link valid for 15 minutes.",
-      "connected": "Connected",
-      "sendTest": "Send test message",
-      "disabled": {
-        "blocked": "The bot was blocked on Telegram. Reconnect to resume alerts.",
-        "other": "Alerts were disabled after a delivery problem."
-      }
-    },
     "autoTag": {
       "title": "Auto-tag",
       "enable": "Tag products with problems",
@@ -214,8 +191,7 @@
     },
     "language": {
       "title": "Language",
-      "interface": "Interface language",
-      "notifications": "Notification language"
+      "interface": "Interface language"
     }
   },
   "rules": {
@@ -252,9 +228,7 @@
     "openManagedPricing": "Manage subscription in Shopify",
     "locked": {
       "watchers": "Webhook watchers are available on Starter and Pro.",
-      "digest": "The weekly email digest is available on Starter and Pro.",
-      "autoTag": "Auto-tag is available on Pro.",
-      "telegram": "Telegram alerts are available on Pro."
+      "autoTag": "Auto-tag is available on Pro."
     },
     "feature": {
       "scans": "Scheduled scans",
@@ -262,10 +236,8 @@
       "issuesShown": "Issues shown",
       "variantCap": "Variants analyzed",
       "watchers": "Webhook watchers",
-      "digest": "Weekly email digest",
       "csv": "CSV export",
-      "autoTag": "Auto-tag",
-      "telegram": "Telegram alerts"
+      "autoTag": "Auto-tag"
     },
     "unlimited": "Unlimited",
     "yes": "Included",
@@ -290,40 +262,6 @@
   "csv": {
     "export": "Export CSV",
     "contentType": "text/csv"
-  },
-  "email": {
-    "digest": {
-      "subject": "ShelfCheck weekly digest",
-      "newIssues": "{count, plural, =0 {No new issues this week} one {# new issue this week} other {# new issues this week}}",
-      "stillOpen": "{count, plural, one {# issue is still open} other {# issues are still open}}",
-      "top": "Top new issues",
-      "openApp": "Open ShelfCheck",
-      "unsubscribe": "Unsubscribe",
-      "unsubscribeHelp": "You are receiving this because you enabled the weekly digest in ShelfCheck.",
-      "greeting": "Hello,",
-      "summary": "{newCount}. {openCount}.",
-      "footer": "ShelfCheck"
-    }
-  },
-  "telegramMessage": {
-    "alert": {
-      "header": "ShelfCheck found new problems",
-      "body": "{count, plural, one {# new high-severity issue} other {# new high-severity issues}}",
-      "openApp": "Open ShelfCheck"
-    },
-    "test": {
-      "body": "This is a test message from ShelfCheck. Alerts are working."
-    },
-    "connected": {
-      "body": "ShelfCheck alerts are now connected to this chat."
-    }
-  },
-  "unsubscribe": {
-    "title": "Unsubscribe",
-    "body": "Do you want to stop receiving the weekly ShelfCheck digest?",
-    "confirm": "Unsubscribe",
-    "done": "You are unsubscribed. You can re-enable the digest in Settings.",
-    "invalid": "This link is no longer valid."
   },
   "errors": {
     "notFound": "Not found",

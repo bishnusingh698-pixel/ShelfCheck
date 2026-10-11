@@ -1,3 +1,5 @@
+> Amended by docs/spec-amendments/001-remove-email-telegram.md. The amendment wins on any conflict.
+
 # ShelfCheck: Agent Build Prompt (v2)
 
 
@@ -39,7 +41,7 @@ You are a senior full-stack Shopify app engineer and localization lead. You have
 What counts: every turn of your agent loop is one request to the model endpoint. This includes turns made by any subagent you start. Target **30 per minute or fewer** to leave headroom for retries.
 
 
-What does not count: the ShelfCheck application itself never calls NVIDIA NIM or any AI service. Do **not** build an NIM rate limiter into the app. (The app has its own, separate limits for the Shopify, Resend, and Telegram APIs, specified later.)
+What does not count: the ShelfCheck application itself never calls NVIDIA NIM or any AI service. Do **not** build an NIM rate limiter into the app. (The app has its own, separate limits for the Shopify APIs, specified later.)
 
 
 How to stay under the limit:
@@ -84,13 +86,13 @@ The only acceptable outcome is a complete, correct app. A fast or partial result
 7. **Spend effort where errors are costly:** billing and plan gating, data loss (uninstall, redact, scan reconciliation), security (HMAC, tokens, tenant isolation), detector correctness, concurrency, localization.
 8. **Adversarial review at the end of every phase:** review your own diff as a skeptical reviewer paid to find bugs. Check null and empty inputs, duplicate deliveries, retries, partial failures, huge inputs, unusual locales, and time zones. If subagents are available, use one fresh-context reviewer (respecting `<rate_limit>`). Fix everything found before closing the phase.
 9. **No silent compromises.** Every shortcut, skipped item, or uncertainty goes into `DECISIONS.md`.
-10. **Don't gold-plate.** Build exactly what the spec lists. Add error handling at real system boundaries (Shopify API, webhooks, database, email, Telegram, user input), not for situations that cannot occur.
+10. **Don't gold-plate.** Build exactly what the spec lists. Add error handling at real system boundaries (Shopify API, webhooks, database, user input), not for situations that cannot occur.
 </verification_discipline>
 
 
 <hard_constraints>
 1. **Admin-only.** No storefront app embed, theme extension, web pixel, or customer-facing email or SMS.
-2. **$0 infrastructure for up to 50 shops:** Render free web service, Neon free Postgres, Resend free tier, Telegram Bot API. No paid APIs. No AI, OCR, or SMS services in the app.
+2. **$0 infrastructure for up to 50 shops:** Render free web service, Neon free Postgres. No paid APIs. No AI, OCR, or SMS services in the app.
 3. **No destructive writes.** The app never edits SKUs, barcodes, prices, or inventory. Its only possible write to Shopify is adding or removing the product tag `shelfcheck-fix`, and only when a Pro merchant opts in.
 4. **Billing only through Shopify Managed Pricing.** No Billing API charges, no Stripe, no off-platform payment links.
 5. **Minimal data.** Store no customer or order data. Required scopes: `read_products`, `read_inventory`. `write_products` is requested only through the optional-scope flow when the merchant enables auto-tag.
@@ -119,12 +121,10 @@ The app is **done** when every automated acceptance check in `<acceptance>` pass
 | Database | Neon free Postgres. **Pooled** connection string at runtime, **direct** string for migrations. Pool max 5. Retry the connection on cold start (Neon suspends when idle). |
 | ORM | Prisma. Also used for Shopify session storage, through an encrypting adapter (see `<security>`). |
 | Job queue | Postgres table claimed with `FOR UPDATE SKIP LOCKED`. No Redis. |
-| Email | Resend free tier (100 per day, 3,000 per month; verified sending domain required). |
-| Instant alerts | Telegram Bot API (Pro). |
 | Scheduling | External cron (cron-job.org) calls a secured `POST /jobs/tick` every 5 to 10 minutes. This also keeps the free instance awake. |
 | Validation | `zod` at every boundary. |
 | Logging | `pino`, structured, never logging tokens or PII. |
-| Tests | Vitest (unit and integration), Playwright (UI in all locales), `@axe-core/playwright` (accessibility), `msw` (Shopify, Resend, and Telegram HTTP mocks). |
+| Tests | Vitest (unit and integration), Playwright (UI in all locales), `@axe-core/playwright` (accessibility), `msw` (Shopify HTTP mocks). |
 | i18n | i18next with an ICU MessageFormat plugin, or FormatJS. Pick one in Phase 0 and record why. |
 </tech_stack>
 
@@ -145,8 +145,6 @@ These are the spec author's best understanding. Treat each as a hypothesis. Veri
 10. **Neon pooled connections use PgBouncer in transaction mode.** Session-level advisory locks (`pg_advisory_lock`) are unsafe there. Use transaction-scoped locks (`pg_try_advisory_xact_lock`) and back the "one active scan per shop" rule with a partial unique index. Check Prisma's current settings for poolers (for example `pgbouncer=true`, `directUrl`, or the newer Prisma config file, depending on the Prisma version installed).
 11. **Prisma migrations are forward-only.** To meet "reversible migrations", hand-write a `down.sql` next to every `migration.sql`, and test up, down, up in CI.
 12. **Render free tier:** instance sleeps after inactivity; monthly free instance-hour budget. Confirm that pinging every 10 minutes stays within it.
-13. **Resend:** free tier limits, webhook signature scheme for bounce and failure events, how to set `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
-14. **Telegram:** `setWebhook` with `secret_token` and the `X-Telegram-Bot-Api-Secret-Token` header; `/start <payload>` deep links; 403 when the user blocks the bot; 429 with `parameters.retry_after`.
 15. **Partner Dashboard listing character limits** for app name, tagline, introduction, feature bullets, and short description.
 </platform_facts_to_verify>
 
@@ -163,12 +161,12 @@ These are the spec author's best understanding. Treat each as a hypothesis. Veri
 │   │     ├─ app.* (UI loaders/actions)  → authenticate.admin → shop context → services     │
 │   │     ├─ webhooks.*                  → verify HMAC → dedupe → persist → enqueue → 200   │
 │   │     ├─ jobs.tick                   → secret check → tick (idempotent)                 │
-│   │     ├─ healthz, unsubscribe, telegram.webhook, resend.webhook                          │
+│   │     ├─ healthz                                                                       │
 │   └─ server/worker.ts (drains jobs while awake; correctness never depends on it)           │
 └────────────────────────────────────────────────────────────────────────────────────────────┘
         │                         │                          │                    │
         ▼                         ▼                          ▼                    ▼
-  Neon Postgres            Shopify Admin GraphQL         Resend API         Telegram Bot API
+  Neon Postgres            Shopify Admin GraphQL
   (sessions, shops,        (bulk operations,
    scans, variant_index,    single-product reads,
    issues, jobs, ...)       optional tag writes)
@@ -180,10 +178,9 @@ These are the spec author's best understanding. Treat each as a hypothesis. Veri
 
 **Core flows**
 1. **Install:** OAuth through the template, encrypted session stored, `shops` row created with locale, time zone, and currency; an install scan is enqueued.
-2. **Scan:** trigger creates a scan (one active per shop), starts a bulk operation, waits (webhook first, polling fallback), streams the JSONL into `variant_index`, runs detectors, reconciles issues, computes the health score, enqueues notifications.
+2. **Scan:** trigger creates a scan (one active per shop), starts a bulk operation, waits (webhook first, polling fallback), streams the JSONL into `variant_index`, runs detectors, reconciles issues, computes the health score.
 3. **Watch:** product and inventory webhooks become debounced jobs that refresh only the affected variants and re-check only the affected SKUs and barcodes.
-4. **Tick:** cron calls `/jobs/tick`, which starts due scans, sends due digests, reopens expired snoozes, fails stuck scans, and drains jobs.
-5. **Notify:** digests (email) and instant alerts (Telegram) are rendered in `notify_locale` and sent through budgeted senders.
+4. **Tick:** cron calls `/jobs/tick`, which starts due scans, reopens expired snoozes, fails stuck scans, and drains jobs.
 
 
 **Layering rules**
@@ -199,7 +196,7 @@ This is the target repository. Create every file listed (template-generated file
 
 ```
 shelfcheck/
-├── README.md                      Setup: Partner app, env vars, Render, Neon, Resend, Telegram BotFather,
+├── README.md                      Setup: Partner app, env vars, Render, Neon,
 │                                  cron-job.org, Managed Pricing plans, local dev, running tests.
 ├── PROGRESS.md                    Live build state and resume instructions (see <context_and_state>).
 ├── DECISIONS.md                   Every self-made decision, assumption, and deviation.
@@ -249,7 +246,7 @@ shelfcheck/
 │   │   ├── logger.server.ts       pino instance with redaction of tokens, secrets, emails, payloads.
 │   │   ├── crypto.server.ts       AES-256-GCM encrypt/decrypt with key versioning.
 │   │   ├── session-storage.server.ts  Session storage adapter that encrypts access tokens at rest.
-│   │   ├── timing-safe.server.ts  Constant-time compare and HMAC helpers (tick secret, unsubscribe, Telegram).
+│   │   ├── timing-safe.server.ts  Constant-time compare and HMAC helpers (tick secret).
 │   │   ├── rate-limit.server.ts   Postgres-backed fixed-window limiter for mutations and /jobs/tick.
 │   │   ├── shop-context.server.ts Resolves the shops row from the authenticated session; the only source of shop_id.
 │   │   ├── admin-graphql.server.ts GraphQL client wrapper: reads extensions.cost, handles THROTTLED and
@@ -294,27 +291,18 @@ shelfcheck/
 │   │   ├── queue.server.ts        Enqueue with dedupe key, claim with SKIP LOCKED, complete, retry with backoff.
 │   │   ├── handlers.server.ts     Job kind → handler map, zod-validated payloads.
 │   │   ├── tick.server.ts         The idempotent tick sequence.
-│   │   ├── scheduler.server.ts    Due scheduled scans and digests computed in the shop's time zone.
+│   │   ├── scheduler.server.ts    Due scheduled scans computed in the shop's time zone.
 │   │   └── watchdog.server.ts      Fails scans stuck for more than 60 minutes.
 │   │
 │   ├── webhooks/
 │   │   ├── intake.server.ts       Shared: verify HMAC, dedupe on webhook ID, persist, enqueue, respond fast.
 │   │   ├── product-sync.server.ts Refreshes one product's variants and re-runs targeted detection.
 │   │   ├── inventory-sync.server.ts Maps inventory_item_id to variants; re-evaluates zero-inventory only.
-│   │   ├── uninstall.server.ts    Marks uninstalled, deletes tokens, cancels jobs, stops notifications.
+│   │   ├── uninstall.server.ts    Marks uninstalled, deletes tokens, cancels jobs.
 │   │   └── redact.server.ts       shop/redact full deletion; customer topics logged without PII.
 │   │
 │   ├── autotag/
 │   │   └── autotag.server.ts      Adds/removes shelfcheck-fix with fingerprint-based loop protection.
-│   │
-│   ├── notifications/
-│   │   ├── digest.server.ts       Selects new-since-last-digest issues and open totals; idempotent per period.
-│   │   ├── email-render.server.ts HTML and plain-text digest rendering in notify_locale.
-│   │   ├── resend.server.ts      Resend client with error mapping.
-│   │   ├── send-budget.server.ts  Daily and monthly send budget across all shops; smooths sends.
-│   │   ├── unsubscribe.server.ts  Signed one-click unsubscribe tokens.
-│   │   ├── telegram.server.ts     Send, batch alerts (max 1 per hour per shop), 403 and 429 handling.
-│   │   └── telegram-link.server.ts One-time connect tokens (15-minute expiry, single use).
 │   │
 │   ├── csv/
 │   │   ├── escape.ts              RFC 4180 escaping plus formula-injection neutralization (pure).
@@ -323,7 +311,7 @@ shelfcheck/
 │   ├── i18n/
 │   │   ├── config.ts              Supported locales, fallback chains, brand-term allowlist.
 │   │   ├── resolve-locale.ts      Maps Shopify locale strings to supported locales (pure).
-│   │   ├── i18n.server.ts         Server instance for loaders, emails, Telegram.
+│   │   ├── i18n.server.ts         Server instance for loaders.
 │   │   ├── i18n.client.ts         Client instance and provider.
 │   │   └── format.ts              Intl helpers: numbers, currency, dates, relative time, lists.
 │   │
@@ -350,7 +338,7 @@ shelfcheck/
 │       ├── app.issues.tsx         Issues list (loader: paginated query; action: bulk actions).
 │       ├── app.issues.$issueId.tsx Issue or group detail panel.
 │       ├── app.rules.tsx          Ignore rules list, add, delete.
-│       ├── app.settings.tsx       All settings including Telegram connect and auto-tag scope flow.
+│       ├── app.settings.tsx       All settings including the auto-tag scope flow.
 │       ├── app.plans.tsx          Plan comparison and link to Managed Pricing.
 │       ├── app.export.csv.tsx     Resource route streaming CSV.
 │       ├── app.scan.tsx           Resource route: start scan (action) and scan status (loader).
@@ -365,9 +353,6 @@ shelfcheck/
 │       ├── webhooks.compliance.tsx customers/data_request, customers/redact, shop/redact.
 │       ├── jobs.tick.tsx          POST only, secret header, rate-limited.
 │       ├── healthz.tsx            200 with DB reachability, no secrets.
-│       ├── unsubscribe.tsx        GET confirmation page and POST one-click unsubscribe.
-│       ├── telegram.webhook.tsx   Bot updates; verifies the secret-token header.
-│       └── resend.webhook.tsx     Bounce and failure events; verifies the signature.
 │
 ├── locales/
 │   └── <code>.json               One file per locale: en, de, fr, es, pt-BR, pt-PT, zh-CN, ja, it, nl, sv.
@@ -390,7 +375,7 @@ shelfcheck/
 │
 ├── tests/
 │   ├── helpers/                  DB reset, factories, msw handlers, webhook signer, clock control.
-│   ├── fixtures/                 Small JSONL, GraphQL, webhook, Resend, Telegram fixtures (large files generated).
+│   ├── fixtures/                 Small JSONL, GraphQL, webhook fixtures (large files generated).
 │   ├── unit/                     One file per pure module.
 │   ├── integration/              Parser, memory, webhooks, tick, queue concurrency, lifecycle, redact, cold start.
 │   └── e2e/                      Playwright specs per screen, all locales, axe.
@@ -409,15 +394,13 @@ shelfcheck/
 Column names are indicative; keep columns minimal.
 
 
-- **shops:** id, shop_domain (unique), scopes, plan, plan_status, plan_checked_at, ui_locale, notify_locale, timezone (IANA), currency, shop_handle, settings (jsonb: enabled issue types, include_draft, include_archived, accept_non_gtin_barcodes, digest {enabled, email, day, hour, skip_when_empty}, telegram {chat_id_enc, enabled, disabled_reason}, auto_tag), installed_at, uninstalled_at, last_scan_at, last_digest_at. The offline access token lives only in the encrypted session store; do not keep a second copy.
+- **shops:** id, shop_domain (unique), scopes, plan, plan_status, plan_checked_at, ui_locale, timezone (IANA), currency, shop_handle, settings (jsonb: enabled issue types, include_draft, include_archived, accept_non_gtin_barcodes, auto_tag), installed_at, uninstalled_at, last_scan_at. The offline access token lives only in the encrypted session store; do not keep a second copy.
 - **scans:** id, shop_id, trigger (install | manual | scheduled), status (queued | running | parsing | completed | failed | canceled), bulk_operation_id, attempt, variants_seen, variants_analyzed, over_cap_count, health_score, counts (jsonb aggregates for the dashboard), error_code, started_at, finished_at. **Partial unique index** on shop_id where status in (queued, running, parsing).
 - **variant_index:** PK (shop_id, variant_gid); product_gid, inventory_item_id, product_title, variant_title, vendor, sku_raw, sku_norm, barcode, price, compare_at_price, product_status, is_gift_card, requires_shipping, weight_present, cost_present, has_image, variant_count_on_product, tracked, inventory_policy, inventory_qty, published_any_channel, fingerprint, seen_scan_id, updated_at. Indexes: (shop_id, sku_norm), (shop_id, barcode), (shop_id, inventory_item_id), (shop_id, product_gid).
-- **issues:** id, shop_id, type, severity, variant_gid, product_gid, group_key, details (jsonb), status (open | snoozed | ignored | intentional | resolved), snoozed_until, intentional_member_count, first_seen_scan_id, last_seen_scan_id, first_seen_at, resolved_at, notified_email_at, notified_telegram_at. Unique (shop_id, type, variant_gid, group_key).
+- **issues:** id, shop_id, type, severity, variant_gid, product_gid, group_key, details (jsonb), status (open | snoozed | ignored | intentional | resolved), snoozed_until, intentional_member_count, first_seen_scan_id, last_seen_scan_id, first_seen_at, resolved_at. Unique (shop_id, type, variant_gid, group_key).
 - **ignore_rules:** id, shop_id, scope (sku | variant | product | vendor), value, issue_type (nullable means all), note, created_at.
 - **webhook_events:** id, shop_id, topic, webhook_id (unique), received_at, processed_at, attempts.
 - **jobs:** id, shop_id, kind, payload (jsonb), run_at, attempts, locked_at, locked_by, last_error, status, dedupe_key. Partial unique index on dedupe_key where status = pending.
-- **notification_log:** id, shop_id, channel, kind, period_key, status, error_code, sent_at. Unique (shop_id, channel, kind, period_key) so a digest can never be sent twice for one period.
-- **telegram_link_tokens:** token_hash, shop_id, expires_at, used_at.
 - **rate_limit_buckets:** key, window_start, count.
 
 
@@ -436,9 +419,8 @@ Configure plans in Shopify **Managed Pricing**. Read the active plan from `curre
 | Issues shown | First 50 by severity then first seen (totals always shown in full) | Unlimited | Unlimited |
 | Variant cap | 500 | 5,000 | 50,000 |
 | Webhook watchers | No | Yes | Yes |
-| Email digest | No | Yes | Yes |
 | CSV export | Yes (50 rows) | Yes | Yes |
-| Auto-tag, Telegram | No | No | Yes |
+| Auto-tag | No | No | Yes |
 
 
 - **Over cap:** analyze up to the cap, show the banner "X variants beyond your plan were not analyzed; duplicates involving them may be missed" (localized, with plural rules) and an upgrade link. Never crash, never silently truncate.
@@ -466,7 +448,7 @@ Configure plans in Shopify **Managed Pricing**. Read the active plan from `curre
 | `ZERO_PRICE` (extra) | low | Active product with price 0. **Off by default.** |
 
 
-- Every type can be toggled in Settings. Disabled types produce no issues and no notifications.
+- Every type can be toggled in Settings. Disabled types produce no issues.
 - **Statuses:** `open`; `snoozed` (7, 30, or 90 days, auto-reopens); `ignored` (by rule); `intentional` (duplicate groups only); `resolved` (set automatically when a later scan or webhook no longer shows the problem).
 - **Intentional groups** are keyed by the SKU or barcode value, with the member count recorded when marked. If a new variant joins later, reopen the group once with `details.group_grew=true`.
 - **Health score (extra):** count only `open` issues. `penalty = 100 * (10*high + 4*medium + 1*low) / max(1, variants_analyzed)`; `score = clamp(100 - penalty, 0, 100)`, rounded to an integer. Bands (localized words): Excellent >= 90, Good >= 75, Needs attention >= 50, Critical < 50.
@@ -480,7 +462,7 @@ Configure plans in Shopify **Managed Pricing**. Read the active plan from `curre
 4. **Stream and parse immediately** (result files expire). Read line by line; never load the file into memory (Render free has about 512 MB). Validate each line with `zod`; count and log malformed lines without stopping. Attach `__parentId` children to their parents. Upsert in batches of 500 to 1,000 inside transactions, setting `seen_scan_id`. Stop analyzing at the plan's variant cap and record `over_cap_count`.
 5. **Detect:** compute fingerprints; run duplicate detection in SQL (`GROUP BY sku_norm` / `barcode HAVING count(*) > 1`); run row rules in code; apply ignore rules; upsert issues while preserving snoozed, ignored, and intentional statuses; handle intentional regrowth; mark issues not seen in this scan as `resolved`.
 6. **Reconcile:** delete `variant_index` rows not seen in this scan **only after the scan completed successfully** and was not over cap for those rows.
-7. **Complete:** store counts, aggregates, and health score; set `last_scan_at`; enqueue notifications for newly opened issues.
+7. **Complete:** store counts, aggregates, and health score; set `last_scan_at`. Newly opened issues keep `first_seen_at` so the in-app "New" badge works.
 8. **Failure:** if the operation is FAILED, CANCELED, or EXPIRED, retry up to 3 times with backoff, then mark the scan `failed` with a localized message and a retry button. `partialDataUrl` may be used only to show partial counts, never to resolve issues or delete rows. The watchdog fails any scan stuck for more than 60 minutes.
 9. **Shopify rate limits:** single-product GraphQL calls read `extensions.cost`, handle `THROTTLED` with backoff, and respect `Retry-After`.
 </scan_pipeline>
@@ -505,7 +487,7 @@ Declare subscriptions in `shopify.app.toml`:
 - `products/*`: debounce per product (about 30 s, via a job with a dedupe key and a future `run_at`). Fetch the product with GraphQL, upsert its variants, re-run row rules, and re-check duplicates only for the SKUs and barcodes involved (old and new values) using the index. Open or resolve issues. Gated to Starter and Pro; on Free, record the event and do nothing else.
 - `inventory_levels/update`: the payload has `inventory_item_id`, not a variant. Map through `variant_index.inventory_item_id`. Coalesce per item; throttle per shop. Re-evaluate only `PUBLISHED_ZERO_INVENTORY`.
 - **Loop protection:** auto-tagging triggers `products/update`. If the recomputed fingerprint equals the stored one, do nothing. Never write to Shopify from webhook-driven work without this check.
-- `app/uninstalled`: mark uninstalled, delete the access token and sessions immediately, cancel pending jobs, stop all notifications. Keep catalog data until `shop/redact` (record this decision).
+- `app/uninstalled`: mark uninstalled, delete the access token and sessions immediately, cancel pending jobs. Keep catalog data until `shop/redact` (record this decision).
 - `shop/redact`: delete every row for the shop in every table, in one transaction.
 - `customers/data_request`, `customers/redact`: the app stores no customer data; log the request without PII and return 200.
 - `app/scopes_update`: update stored scopes; disable auto-tag if `write_products` was removed.
@@ -513,7 +495,7 @@ Declare subscriptions in `shopify.app.toml`:
 
 
 <jobs_and_scheduling>
-- `POST /jobs/tick`: requires a secret header (constant-time compare), is rate-limited, **idempotent**, and safe to call concurrently. Each call: starts due scheduled scans; sends due digests; reopens expired snoozes; runs the watchdog; drains pending jobs for a bounded time (so the request finishes well within the cron service's timeout).
+- `POST /jobs/tick`: requires a secret header (constant-time compare), is rate-limited, **idempotent**, and safe to call concurrently. Each call: starts due scheduled scans; reopens expired snoozes; runs the watchdog; drains pending jobs for a bounded time (so the request finishes well within the cron service's timeout).
 - The in-process worker also drains jobs while the instance is awake (this keeps webhook latency low), but correctness never depends on it.
 - Jobs: claimed with `FOR UPDATE SKIP LOCKED`, retried with exponential backoff, capped attempts, `last_error` stored without secrets. Handlers must be idempotent.
 - `SIGTERM`: stop claiming jobs, finish or release the current one, close the DB pool, exit.
@@ -522,25 +504,10 @@ Declare subscriptions in `shopify.app.toml`:
 
 
 <notifications>
-**Weekly email digest (Starter and Pro)**
-- Contains only issues first seen since the last digest, plus the total open count (for example, "3 new issues this week. 41 still open.", localized with plurals). Top 5 new issues with deep links, plus a link into the app.
-- Day, hour (shop time zone), recipient, and language are configurable. Skip when nothing is new and nothing is open (configurable).
-- HTML and plain-text versions; signed one-click unsubscribe link; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
-- A global send budget keeps total sends under the Resend daily and monthly limits; excess sends are deferred, never dropped silently.
-- Bounces and failures (from the Resend webhook) are shown in Settings.
+**In-app only.** There are no outbound messages of any kind. Issues opened by webhooks or scans appear in the app with a "New" badge.
 
 
-**Telegram (Pro)**
-- Connect with a one-time deep link `https://t.me/<bot>?start=<token>`; token expires in 15 minutes and is single use (store only a hash).
-- Alerts for new **high** severity issues, batched, at most 1 per hour per shop.
-- 403 (user blocked the bot): disable the channel and tell the merchant in Settings. 429: wait `retry_after`.
-- "Send test message" button.
-
-
-**In-app:** issues opened by webhooks appear immediately with a "New" badge.
-
-
-**Links:** emails, Telegram, and CSV use `https://admin.shopify.com/store/<handle>/...`. Inside the embedded app use App Bridge-compatible `shopify://admin/...` links.
+**Links:** CSV export uses `https://admin.shopify.com/store/<handle>/...`. Inside the embedded app use App Bridge-compatible `shopify://admin/...` links.
 </notifications>
 
 
@@ -548,11 +515,11 @@ Declare subscriptions in `shopify.app.toml`:
 Follow Built for Shopify design requirements and Polaris patterns. No custom visual theme, no external CSS frameworks. Support light and dark admin themes. Every screen has loading (skeleton), empty, and error states. Use the template's `Link`, `redirect`, and `useSubmit`; never raw `<a>` links or plain React Router `redirect` inside the embedded app.
 
 
-1. **Onboarding / first run:** the first scan starts automatically after install. Checklist: scan running (live progress), review issues, set up digest. Never a blank screen.
+1. **Onboarding / first run:** the first scan starts automatically after install. Checklist: scan running (live progress), review issues. Never a blank screen.
 2. **Dashboard:** health score; counts by severity and type (each links to the filtered list); Scan now with live status and cooldown; last scan time; plan usage (variants analyzed versus cap); trend of new versus resolved over the last 8 scans; over-cap banner when relevant.
 3. **Issues:** server-side pagination; filters (type, severity, status, vendor); search by SKU or product title; sorting. Detail panel: for duplicate groups, every member with product, variant, "Open in Shopify admin" link, and a copy-SKU button. Bulk actions: snooze, ignore, mark intentional. Each of these offers undo.
 4. **Rules:** list, add, delete ignore rules (scope SKU, variant, product, vendor; optional issue type; note).
-5. **Settings:** issue type toggles; include draft and archived; accept non-GTIN barcodes; digest; Telegram connect; auto-tag with the optional-scope request flow; interface language; notification language.
+5. **Settings:** issue type toggles; include draft and archived; accept non-GTIN barcodes; auto-tag with the optional-scope request flow; interface language.
 6. **Plans:** comparison table and a link to Shopify's Managed Pricing page.
 7. **CSV export** of the current filtered open list. UTF-8 with BOM; streamed. Stable, **non-translated** columns: `issue_type, severity, status, product_id, product_title, variant_id, variant_title, sku, barcode, vendor, detail, group_key, admin_url, first_seen, last_seen`. Neutralize formula injection (cells starting with `=`, `+`, `@`, or `-` followed by a non-digit) without altering ordinary SKUs, barcodes, or negative numbers.
 
@@ -566,24 +533,23 @@ Follow Built for Shopify design requirements and Polaris patterns. No custom vis
 
 <security>
 - Validate the session token on every admin route. Derive `shop_id` only from the authenticated session.
-- Encrypt access tokens (via the encrypting session storage adapter) and Telegram chat IDs at rest with AES-256-GCM. Keys only in env vars. Support key versioning.
+- Encrypt access tokens (via the encrypting session storage adapter) at rest with AES-256-GCM. Keys only in env vars. Support key versioning.
 - Validate every input with `zod`. Rate-limit mutation endpoints and `/jobs/tick`.
 - Never log tokens, secrets, emails, or full webhook payloads. Test the logger's redaction.
 - Correct CSP `frame-ancestors` for embedding in Shopify admin (per shop).
 - No raw SQL string concatenation; use parameterized queries (`Prisma.sql` or equivalent).
-- Signed tokens (unsubscribe, Telegram connect) use HMAC with a dedicated key and constant-time comparison.
-</security>
+- </security>
 
 
 <localization>
 **Supported locales (all required, fully translated, in the first release):** `en` (source), `de`, `fr`, `es`, `pt-BR`, `pt-PT`, `zh-CN`, `ja`, `it`, `nl`, `sv`. Stretch, only after everything else passes: `zh-TW`.
 
 
-1. **Locale detection:** use the `locale` Shopify provides to the embedded app. Fallback chains, for example `pt-PT → pt-BR → en` only if `pt-PT` is missing (it isn't), `zh-Hans-CN → zh-CN → en`, `de-AT → de → en`. Merchant can override the interface language (persisted per shop). Emails and Telegram use `notify_locale` (defaults to the interface language at install).
-2. **Zero hard-coded user-facing strings,** including errors, toasts, validation messages, issue names, severities, plan names, empty states, page titles, `aria-label`s, email subjects and bodies, Telegram messages, health-score words. Namespaced keys (`area.component.element`). Never build sentences by concatenation; use full sentences with named placeholders.
+1. **Locale detection:** use the `locale` Shopify provides to the embedded app. Fallback chains, for example `pt-PT → pt-BR → en` only if `pt-PT` is missing (it isn't), `zh-Hans-CN → zh-CN → en`, `de-AT → de → en`. Merchant can override the interface language (persisted per shop).
+2. **Zero hard-coded user-facing strings,** including errors, toasts, validation messages, issue names, severities, plan names, empty states, page titles, `aria-label`s, health-score words. Namespaced keys (`area.component.element`). Never build sentences by concatenation; use full sentences with named placeholders.
 3. **ICU MessageFormat** for plurals and select, with correct CLDR plural categories per locale (Japanese and Chinese have only `other`). Test counts 0, 1, 2, 5, and 1,000,000.
 4. **Intl formatting** for dates, numbers, relative time, lists, and currency, using the shop's currency and IANA time zone.
-5. **Glossary:** `i18n/GLOSSARY.md` with approved terms per language for catalog, variant, SKU, barcode, inventory, duplicate, scan, issue, severity, snooze, digest, intentional. Match the formal or informal register Shopify admin uses in each language and record it. Never translate: ShelfCheck, SKU, GTIN, CSV, Shopify, Telegram, Matrixify.
+5. **Glossary:** `i18n/GLOSSARY.md` with approved terms per language for catalog, variant, SKU, barcode, inventory, duplicate, scan, issue, severity, snooze, intentional. Match the formal or informal register Shopify admin uses in each language and record it. Never translate: ShelfCheck, SKU, GTIN, CSV, Shopify, Matrixify.
 6. **Quality:** natural, native e-commerce language, not word-for-word output. List lower-confidence strings in `TRANSLATION_REVIEW.md`.
 7. **Workflow:** from Phase 3 onward, every new string goes into `locales/en.json` and through `t()`. The other locales are produced in Phase 12 in one pass per locale (to limit context use), then kept in sync.
 8. **Layout resilience:** no fixed-width text containers (German runs about 30% longer); correct CJK line breaking; logical CSS properties only; `dir` set on the root so a right-to-left language could be added later.
@@ -613,7 +579,7 @@ Follow Built for Shopify design requirements and Polaris patterns. No custom vis
 - Missing `app/uninstalled` or `shop/redact` cleanup.
 - Storing offline tokens in plaintext through the default session storage.
 - Hard-coded `left`/`right` CSS, plural logic like `count === 1`, or date formats.
-- Dates computed in UTC when they should be in the shop's time zone (digest day, scheduled scans, "calendar month").
+- Dates computed in UTC when they should be in the shop's time zone (scheduled scans, "calendar month").
 </known_pitfalls>
 
 
@@ -624,7 +590,7 @@ Follow Built for Shopify design requirements and Polaris patterns. No custom vis
 **Integration (real Postgres, external HTTP mocked with msw):** JSONL parsing from fixtures (malformed lines, `__parentId` records); the 50,000-variant synthetic file with peak RSS under 300 MB (measure and record it); webhook HMAC (valid, invalid, replayed); idempotent `/jobs/tick` under concurrent calls; job locking under concurrency; scan lifecycle (success, failure with retries, watchdog, over cap); reconciliation never deleting after a failed scan; uninstall and `shop/redact`; cold start (see acceptance 9); migrations up, down, up; storage estimate.
 
 
-**i18n:** parity check across all locales; plural rendering per locale for 0, 1, 2, 5, 1,000,000; pseudo-locale smoke test; email and Telegram rendering per locale.
+**i18n:** parity check across all locales; plural rendering per locale for 0, 1, 2, 5, 1,000,000; pseudo-locale smoke test; "New" badge text rendering per locale.
 
 
 **UI (Playwright against the UI harness):** every main screen in every locale renders with no missing-key markers and no horizontal overflow at 375 px and 1280 px; axe reports no critical or serious violations; light and dark color schemes. If Polaris web components cannot load in the test environment (for example, no network to Shopify's CDN), log a deviation and move the affected checks to `HUMAN_STEPS.md`.
@@ -648,7 +614,7 @@ Each criterion is either **[AUTO]** (you must prove it with tests or commands) o
 8. [AUTO] Uninstall then reinstall works at the data level; `shop/redact` removes every row for the shop in every table. [LIVE] Real uninstall and reinstall.
 9. [AUTO] Cold start: a webhook is persisted, the process is stopped before the job runs, a later `/jobs/tick` processes it exactly once.
 10. [AUTO] Plan limits behave as in `<plans_and_limits>`: Free limits, over-cap banner, downgrade lock, upgrade unlock.
-11. [AUTO] Digest and Telegram messages render in the configured language with correct plurals and links (mocked transports). [LIVE] Real delivery through Resend and Telegram.
+11. [AUTO] The "New" badge appears on newly opened issues and its text renders correctly in every locale.
 12. [AUTO] `npm run verify` passes: i18n check, typecheck, lint, unit, integration, e2e, secrets check. Axe results reported. [LIVE] Web vitals measured in the real admin.
 13. [AUTO] No secrets in the repository; no dead code (run an unused-exports/unused-dependencies check); every dependency is listed with its purpose in `README.md`.
 </acceptance>
@@ -733,14 +699,9 @@ Work through these phases in order. Each phase is split into **work packets** of
 - Gate: Playwright and axe pass for every screen in `en` and `en-XA`; CSV tests pass; acceptance 4, 5, 10 [AUTO] pass.
 
 
-**Phase 10: Email digest**
-- `digest.server.ts`, `email-render.server.ts`, `resend.server.ts`, `send-budget.server.ts`, `unsubscribe.server.ts`, `unsubscribe.tsx`, `resend.webhook.tsx`.
-- Gate: digest selection, period idempotency, budget smoothing, unsubscribe signature, bounce display tests pass.
+**Phase 10: Removed by amendment 001 (docs/spec-amendments/001-remove-email-telegram.md)** — was "Email digest".
 
-
-**Phase 11: Telegram**
-- `telegram.server.ts`, `telegram-link.server.ts`, `telegram.webhook.tsx`, settings connect UI and test button.
-- Gate: token expiry and single use, batching (1 per hour), 403 disable, 429 retry tests pass.
+**Phase 11: Removed by amendment 001** — was "Telegram".
 
 
 **Phase 12: Localization**

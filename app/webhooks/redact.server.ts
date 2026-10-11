@@ -7,8 +7,8 @@ import type { StoredWebhookEvent } from "./intake.server.js";
  * GDPR compliance topics (spec <webhooks>):
  *  - shop/redact: delete EVERY row for the shop in every table, in one
  *    transaction. The shops row cascades to scans, variants, issues, rules,
- *    jobs, notifications, telegram tokens; sessions and webhook events are
- *    keyed by shop domain and removed explicitly.
+ *    jobs; sessions and webhook events are keyed by shop domain and removed
+ *    explicitly.
  *  - customers/data_request, customers/redact: the app stores NO customer
  *    data; the event is logged (already stored, scrubbed to {shop_domain} by
  *    the intake) and acknowledged.

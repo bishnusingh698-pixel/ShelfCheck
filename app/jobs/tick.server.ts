@@ -5,7 +5,6 @@ import { reclaimStuckJobs, drainJobs, type JobHandler } from "./queue.server.js"
 import { runDueScheduledScans } from "./scheduler.server.js";
 import { runWatchdog } from "./watchdog.server.js";
 import { reopenExpiredSnoozes } from "../issues/snooze.server.js";
-import { sendDueDigests } from "../notifications/digest.server.js";
 import { pruneRateLimitBuckets } from "../lib/rate-limit.server.js";
 
 /**
@@ -15,7 +14,6 @@ import { pruneRateLimitBuckets } from "../lib/rate-limit.server.js";
  */
 export interface TickResult {
   scansStarted: number;
-  digestsSent: number;
   snoozesReopened: number;
   scansFailed: number;
   jobsReclaimed: number;
@@ -35,7 +33,6 @@ export async function tick(options: TickOptions): Promise<TickResult> {
   const { logger, handler, now = new Date(), client = db, maxDrainMs = 5000 } = options;
 
   const scansStarted = await runDueScheduledScans(now, client, logger);
-  const digestsSent = await sendDueDigests(now, client, logger);
   const snoozesReopened = await reopenExpiredSnoozes(now, client);
   const scansFailed = await runWatchdog(now, client, logger);
   const jobsReclaimed = await reclaimStuckJobs(new Date(now.getTime() - 10 * 60_000), client);
@@ -48,7 +45,6 @@ export async function tick(options: TickOptions): Promise<TickResult> {
 
   const result: TickResult = {
     scansStarted,
-    digestsSent,
     snoozesReopened,
     scansFailed,
     jobsReclaimed,

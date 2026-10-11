@@ -64,7 +64,7 @@ export function tryOpen(sealedString: string, keyVersioned: string): string | nu
   }
 }
 
-/** SHA-256 hex digest of a value (used for one-time tokens; only hashes are stored). */
+/** SHA-256 hex hash of a value (only hashes are stored, never the values). */
 export function sha256Hex(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }

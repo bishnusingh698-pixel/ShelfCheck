@@ -25,7 +25,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export const PSEUDO_LOCALE = "en-XA" as const;
 
 /** Never translated: brand terms and codes. */
-export const BRAND_TERMS = ["ShelfCheck", "SKU", "GTIN", "CSV", "Shopify", "Telegram", "Matrixify"];
+export const BRAND_TERMS = ["ShelfCheck", "SKU", "GTIN", "CSV", "Shopify", "Matrixify"];
 
 /** Fallback chains: try exact, then language, then en. */
 const FALLBACKS: Record<string, string[]> = {

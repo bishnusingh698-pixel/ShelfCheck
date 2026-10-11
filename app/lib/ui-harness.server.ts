@@ -46,10 +46,26 @@ export function harnessSession(request?: Request): HarnessSession | null {
  *  - the main one with completed scans, aggregate counts, and open issues,
  *  - an onboarding one that has only just installed (first scan queued).
  * Called by the harness boot path only.
+ *
+ * Concurrent SSR loaders (layout + route) all reach this on the first
+ * request, so concurrent calls share one in-flight seed instead of racing
+ * `findUnique` → `create`, where the loser hits the shop id unique
+ * constraint. The promise is not kept after it settles: tests truncate the
+ * database between cases, so each fresh request must re-check and re-seed.
  */
+let inFlight: Promise<void> | null = null;
+
 export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> {
   if (!uiHarnessActive()) return;
+  if (!inFlight) {
+    inFlight = seedOnce(client).finally(() => {
+      inFlight = null;
+    });
+  }
+  return inFlight;
+}
 
+async function seedOnce(client: PrismaClient): Promise<void> {
   const existing = await client.shop.findUnique({ where: { id: HARNESS_SHOP_ID } });
   if (existing) return; // already seeded for this server run
 

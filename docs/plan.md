@@ -10,9 +10,9 @@ One Node process (Render free web service, 512 MB RAM):
 server/index.ts (Express)
   ├── security headers: CSP frame-ancestors 'self' https://<shop>.myshopify.com
   │   (via template's addDocumentResponseHeaders for HTML + our own for non-doc routes)
-  ├── raw-body capture BEFORE JSON parsing (webhooks: Shopify HMAC + Resend Svix + Telegram secret)
+  ├── raw-body capture BEFORE JSON parsing (webhooks: Shopify HMAC)
   ├── @react-router/express createRequestHandler → app/routes/* (build/server/index.js)
-  ├── /healthz, /jobs/tick, /unsubscribe, /webhooks/*, /telegram/webhook (React Router routes, same handler)
+  ├── /healthz, /jobs/tick, /webhooks/* (React Router routes, same handler)
   ├── worker loop started in-process (claims jobs while awake; correctness independent of it)
   └── SIGTERM → stop claiming, drain current job (≤30 s), prisma.$dispose(), exit
 ```
@@ -30,17 +30,17 @@ trigger → advisory xact lock + partial-unique-guarded INSERT (status=queued)
        → stop at plan cap; record over_cap_count
        → detectors (SQL duplicate groups + in-code row rules) → issues lifecycle (preserve snoozed/ignored/intentional)
        → resolve issues not seen in this scan → reconcile (delete unseen rows) only on success
-       → status=completed (counts, health score) → enqueue notifications
+       → status=completed (counts, health score)
 failure → retry ≤3 with backoff → status=failed (+watchdog fail for >60 min stuck)
 ```
 
-**Tick (`POST /jobs/tick`, secret + rate-limited, idempotent):** start due scheduled scans → send due digests → reopen expired snoozes → watchdog → drain jobs ≤20 s (bounded to stay inside cron HTTP timeouts); the in-process worker drains the rest while awake.
+**Tick (`POST /jobs/tick`, secret + rate-limited, idempotent):** start due scheduled scans → reopen expired snoozes → watchdog → drain jobs ≤20 s (bounded to stay inside cron HTTP timeouts); the in-process worker drains the rest while awake.
 
-**Storage of secrets:** offline tokens only inside the encrypted Prisma session store (AES-256-GCM wrapper around `@shopify/shopify-app-session-storage-prisma`); Telegram chat ids AES-256-GCM encrypted in `shops.settings`; signed tokens (unsubscribe, telegram-link, tick) use a dedicated HMAC key with key-versioned prefix `v1:`.
+**Storage of secrets:** offline tokens only inside the encrypted Prisma session store (AES-256-GCM wrapper around `@shopify/shopify-app-session-storage-prisma`); the tick secret uses a dedicated HMAC key with key-versioned prefix `v1:`.
 
 ## 2. Data model (final)
 
-Prisma models (PostgreSQL 15+; Neon): `Session` (template shape + our encryption), `Shop`, `Scan`, `VariantIndex`, `Issue`, `IgnoreRule`, `WebhookEvent`, `Job`, `NotificationLog`, `TelegramLinkToken`, `RateLimitBucket`.
+Prisma models (PostgreSQL 15+; Neon): `Session` (template shape + our encryption), `Shop`, `Scan`, `VariantIndex`, `Issue`, `IgnoreRule`, `WebhookEvent`, `Job`, `RateLimitBucket`.
 
 Key indexes (raw SQL in migrations):
 - `scans`: partial unique `(shop_id) WHERE status IN ('queued','running','parsing')`
@@ -48,10 +48,9 @@ Key indexes (raw SQL in migrations):
 - `issues`: unique `(shop_id, type, variant_gid, group_key)`; `(shop_id, status, severity)`; `(shop_id, group_key)`
 - `jobs`: partial unique `(dedupe_key) WHERE status='pending'`; `(status, run_at)`
 - `webhook_events`: unique `(webhook_id)`
-- `notification_log`: unique `(shop_id, channel, kind, period_key)`
 - `rate_limit_buckets`: PK `(key, window_start)`
 
-`shops.settings` (jsonb) shape (zod-validated in code): enabled issue types, include_draft, include_archived, accept_non_gtin_barcodes, digest{enabled,email,day,hour,skip_when_empty}, telegram{chat_id_enc,enabled,disabled_reason}, auto_tag.
+`shops.settings` (jsonb) shape (zod-validated in code): enabled issue types, include_draft, include_archived, accept_non_gtin_barcodes, auto_tag.
 
 Migrations are forward-only in Prisma; every `migration.sql` ships a hand-written `down.sql`, and CI runs up→down→up.
 
@@ -86,8 +85,8 @@ Migrations are forward-only in Prisma; every `migration.sql` ships a hand-writte
 - **P7:** wp1 product-sync + products webhooks; wp2 inventory-sync + webhook; wp3 autotag + loop-protection tests.
 - **P8:** wp1 app shell + root + i18n provider; wp2 dashboard + onboarding + scan status; wp3 plan usage/banner/locked + skeletons/empty/error; wp4 ui-harness + Playwright en/en-XA + axe.
 - **P9:** wp1 issues list + detail + bulk actions + undo; wp2 rules + settings; wp3 plans + csv escape/export; wp4 e2e for all screens.
-- **P10:** wp1 digest selection + idempotency; wp2 email render + resend client; wp3 send-budget + unsubscribe (token + route) + resend webhook.
-- **P11:** wp1 telegram-link + webhook; wp2 telegram send/batch + 403/429; wp3 settings UI connect + test button.
+- **P10:** removed by amendment 001 (was: digest selection, email render, resend client, send-budget, unsubscribe, resend webhook).
+- **P11:** removed by amendment 001 (was: telegram-link, webhook, send/batch, 403/429, settings UI).
 - **P12:** wp0 GLOSSARY; wp1–wp10 one locale each (de, fr, es, pt-BR, pt-PT, zh-CN, ja, it, nl, sv); wp11 TRANSLATION_REVIEW + listings; wp12 i18n:check green + plural tests + per-locale e2e.
 - **P13:** wp1 perf + a11y pass; wp2 security review; wp3 docs (README/SUBMISSION_CHECKLIST/PRIVACY_POLICY/.env.example); wp4 verify-api + live-acceptance scripts + final HUMAN_STEPS; wp5 acceptance-report.
 

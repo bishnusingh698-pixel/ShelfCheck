@@ -50,17 +50,13 @@ export function variantCap(plan: string): number {
   return planLimits(plan).variantCap;
 }
 
-export function featureEnabled(plan: string, feature: "watchers" | "digest" | "autoTag" | "telegram"): boolean {
+export function featureEnabled(plan: string, feature: "watchers" | "autoTag"): boolean {
   const limits = planLimits(plan);
   switch (feature) {
     case "watchers":
       return limits.webhookWatchers;
-    case "digest":
-      return limits.emailDigest;
     case "autoTag":
       return limits.autoTag;
-    case "telegram":
-      return limits.telegram;
   }
 }
 

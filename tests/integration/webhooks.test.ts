@@ -177,19 +177,17 @@ describe("app/uninstalled", () => {
     expect(shop?.uninstalledAt).not.toBeNull();
   });
 
-  it("cancels pending jobs and clears telegram link tokens, but keeps catalog data", async () => {
+  it("cancels pending jobs, but keeps catalog data and job history", async () => {
     const db = testDb();
     const shop = await db.shop.findUnique({ where: { shopDomain: SHOP } });
-    await db.job.create({ data: { kind: "digest_send", payload: {}, shopId: shop!.id, status: "pending" } });
+    await db.job.create({ data: { kind: "scan_poll", payload: {}, shopId: shop!.id, status: "pending" } });
     await db.job.create({ data: { kind: "scan_start", payload: {}, shopId: shop!.id, status: "done" } });
     await db.scan.create({ data: { shopId: shop!.id, trigger: "manual", status: "completed" } });
-    await db.telegramLinkToken.create({ data: { shopId: shop!.id, tokenHash: "hash", expiresAt: new Date(Date.now() + 3600_000) } });
 
     await uninstallShop(SHOP);
 
     expect(await db.job.count({ where: { status: "pending" } })).toBe(0);
     expect(await db.job.count({ where: { status: "done" } })).toBe(1); // history kept
-    expect(await db.telegramLinkToken.count()).toBe(0);
     expect(await db.scan.count()).toBe(1); // catalog data kept until shop/redact
   });
 

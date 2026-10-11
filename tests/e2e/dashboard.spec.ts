@@ -12,7 +12,7 @@ import AxeBuilder from "@axe-core/playwright";
  * `?fixture=onboarding` selects the fresh-install fixture shop.
  */
 
-const KEY_MARKER = /\b(app|nav|common|issue|dashboard|scan|settings|rules|plans|toast|csv|email)\.[a-z][a-z]/i;
+const KEY_MARKER = /\b(app|nav|common|issue|dashboard|scan|settings|rules|plans|toast|csv)\.[a-z][a-z]/i;
 const ACCENTED = /[áéíóúñçÁÉÍÓÚÑÇ]/;
 
 const pseudo = (testInfo: TestInfo) => testInfo.project.name === "en-XA";
@@ -72,7 +72,6 @@ test("onboarding checklist shows for a fresh install — never a blank screen", 
   // The install scan is queued, so the first step shows live progress.
   await expect(page.getByText("First scan running")).toBeVisible();
   await expect(page.getByText("Review your issues")).toBeVisible();
-  await expect(page.getByText("Set up the weekly digest")).toBeVisible();
   // No health score yet: no completed scan.
   await expect(page.getByText("Health score")).not.toBeVisible();
 });

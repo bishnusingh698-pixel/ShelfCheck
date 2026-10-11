@@ -121,10 +121,8 @@ describe("plan gating", () => {
     expect(issueVisibilityLimit("starter")).toBe(0);
     expect(featureEnabled("free", "watchers")).toBe(false);
     expect(featureEnabled("starter", "watchers")).toBe(true);
-    expect(featureEnabled("starter", "telegram")).toBe(false);
-    expect(featureEnabled("pro", "telegram")).toBe(true);
     expect(featureEnabled("pro", "autoTag")).toBe(true);
-    expect(featureEnabled("free", "digest")).toBe(false);
+    expect(featureEnabled("free", "autoTag")).toBe(false);
     expect(isOverCap("free", 501)).toBe(true);
     expect(isOverCap("free", 500)).toBe(false);
     expect(planLimits("starter").scheduled).toBe("weekly");

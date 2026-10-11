@@ -137,7 +137,6 @@ export default function Index() {
           steps={[
             { key: "scanRunning", state: data.onboarding.scanRunning ? "running" : "todo" },
             { key: "reviewIssues", state: "todo" },
-            { key: "setUpDigest", state: "todo" },
           ]}
         />
       ) : (

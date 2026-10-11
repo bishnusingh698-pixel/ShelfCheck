@@ -414,3 +414,13 @@ Why: a wrong period key silently collides two different weeks into one Notificat
 Risk if wrong: none remaining — assertions cover mid-week, week boundary, TZ fold, and the 53-week boundary.
 Evidence: notifications.test.ts "digest period keys" (5 instants, 2 zones).
 Status: Verified
+
+## D-42: Email digest and Telegram alerts removed from v1 by user amendment (plan prices unchanged)
+Type: deviation
+Phase: 10 (amendment 001)
+Choice: Per `docs/spec-amendments/001-remove-email-telegram.md`, the user removed the email digest (Phase 10) and Telegram alerts (Phase 11) from v1 scope. All email/Resend/Svix/unsubscribe/Telegram code, routes, jobs, DB objects, env vars, packages, locale keys, tests, and docs are removed. Notifications are now in-app only (the "New" badge on newly opened issues). Plan prices stay unchanged (Free / Starter $19 / Pro $39); the plan table loses only the "Email digest" and "Telegram" rows. Acceptance criterion 11 becomes: the "New" badge appears on newly opened issues and renders correctly in every locale.
+Alternatives considered: keep the built Phase 10 code behind a flag (the amendment forbids feature flags/stubs); build Phase 11 anyway (out of scope).
+Why: the amendment is explicit and overrides SPEC.md on every conflict; removing fully is cleaner and safer than leaving dead outbound-message paths.
+Risk if wrong: none known — the removal is verified by the amendment's own proof steps (zero-match search, full verify gate, acceptance re-runs).
+Evidence: docs/spec-amendments/001-remove-email-telegram.md; docs/phase-reports/amendment-001.md (removal checklist + proof).
+Status: Pending user feedback

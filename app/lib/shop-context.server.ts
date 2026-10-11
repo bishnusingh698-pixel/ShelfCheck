@@ -5,6 +5,10 @@ import { db } from "../db.server.js";
  * The ONLY source of shop_id for admin requests. Resolves the authenticated
  * session's shop and returns its `shops` row. Never trust client input for
  * shop identity or locale/timezone defaults.
+ *
+ * Old rows may still carry keys that no longer exist (removed features);
+ * `.strip()` drops them instead of failing, so settings written before a
+ * removal keep parsing.
  */
 
 export const SHOP_SETTINGS_SCHEMA = z
@@ -13,25 +17,9 @@ export const SHOP_SETTINGS_SCHEMA = z
     includeDraft: z.boolean().optional(),
     includeArchived: z.boolean().optional(),
     acceptNonGtinBarcodes: z.boolean().optional(),
-    digest: z
-      .object({
-        enabled: z.boolean(),
-        email: z.string().optional(),
-        day: z.number().int().min(0).max(6),
-        hour: z.number().int().min(0).max(23),
-        skipWhenEmpty: z.boolean(),
-      })
-      .partial({ email: true })
-      .optional(),
-    telegram: z
-      .object({
-        chatIdEnc: z.string().optional(),
-        enabled: z.boolean().optional(),
-        disabledReason: z.string().optional(),
-      })
-      .optional(),
     autoTag: z.boolean().optional(),
   })
+  .strip()
   .default({});
 
 export type ShopSettings = z.infer<typeof SHOP_SETTINGS_SCHEMA>;
@@ -43,7 +31,6 @@ export interface ShopContext {
   timezone: string | null;
   currency: string | null;
   uiLocale: string | null;
-  notifyLocale: string | null;
   scopes: string | null;
   plan: string;
   planStatus: string | null;
@@ -51,7 +38,6 @@ export interface ShopContext {
   installedAt: Date;
   uninstalledAt: Date | null;
   lastScanAt: Date | null;
-  lastDigestAt: Date | null;
 }
 
 export async function loadShopContext(shopDomain: string): Promise<ShopContext | null> {
@@ -65,7 +51,6 @@ export async function loadShopContext(shopDomain: string): Promise<ShopContext |
     timezone: shop.timezone,
     currency: shop.currency,
     uiLocale: shop.uiLocale,
-    notifyLocale: shop.notifyLocale,
     scopes: shop.scopes,
     plan: shop.plan,
     planStatus: shop.planStatus,
@@ -73,7 +58,6 @@ export async function loadShopContext(shopDomain: string): Promise<ShopContext |
     installedAt: shop.installedAt,
     uninstalledAt: shop.uninstalledAt,
     lastScanAt: shop.lastScanAt,
-    lastDigestAt: shop.lastDigestAt,
   };
 }
 

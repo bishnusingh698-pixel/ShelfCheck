@@ -3,7 +3,7 @@ import { createHmac } from "node:crypto";
 import { resolveLocale } from "../../app/i18n/resolve-locale.js";
 import { fallbackChain } from "../../app/i18n/config.js";
 import { seal, open, tryOpen, sha256Hex, constantTimeEqual } from "../../app/lib/crypto.server.js";
-import { signToken, verifyToken, timingSafeStringEqual, verifyShopifyHmac } from "../../app/lib/timing-safe.server.js";
+import { timingSafeStringEqual, verifyShopifyHmac } from "../../app/lib/timing-safe.server.js";
 import { computeThrottleDelayMs, isThrottled } from "../../app/lib/admin-graphql.server.js";
 import { adminHttpsUrl, appBridgeUrl, productAdminPath } from "../../app/lib/admin-urls.js";
 import { makeT } from "../../app/i18n/i18n.server.js";
@@ -69,20 +69,7 @@ describe("crypto round-trip and tamper detection", () => {
   });
 });
 
-describe("signed tokens", () => {
-  it("round-trips and expires", () => {
-    const now = Date.now();
-    const token = signToken("shop1:unsubscribe", KEY, 15 * 60_000, now);
-    expect(verifyToken(token, KEY, now)?.payload).toBe("shop1:unsubscribe");
-    expect(verifyToken(token, KEY, now + 16 * 60_000)).toBeNull();
-  });
-  it("tamper detection", () => {
-    const token = signToken("x", KEY, 60_000);
-    const parts = token.split(".");
-    const evil = `${parts[0]}.${parts[1]}.${"0".repeat(64)}`;
-    expect(verifyToken(evil, KEY)).toBeNull();
-    expect(verifyToken("garbage", KEY)).toBeNull();
-  });
+describe("timing-safe compares and HMAC", () => {
   it("timing-safe string equal", () => {
     expect(timingSafeStringEqual("abc", "abc")).toBe(true);
     expect(timingSafeStringEqual("abc", "abd")).toBe(false);
@@ -113,7 +100,7 @@ describe("graphql throttle handling", () => {
 });
 
 describe("admin URLs", () => {
-  it("https URLs for email/telegram/csv", () => {
+  it("https URLs for csv", () => {
     expect(adminHttpsUrl("myshop", "/products/123")).toBe("https://admin.shopify.com/store/myshop/products/123");
     expect(productAdminPath("myshop", "gid://shopify/Product/123")).toBe("https://admin.shopify.com/store/myshop/products/123");
   });
@@ -125,11 +112,12 @@ describe("admin URLs", () => {
 describe("server i18n", () => {
   it("translates with placeholders and plurals", () => {
     const t = makeT("en");
-    expect(t("email.digest.newIssues", { count: 0 })).toBe("No new issues this week");
-    expect(t("email.digest.newIssues", { count: 1 })).toBe("1 new issue this week");
-    expect(t("email.digest.newIssues", { count: 5 })).toBe("5 new issues this week");
-    expect(t("email.digest.stillOpen", { count: 41 })).toBe("41 issues are still open");
     expect(t("issue.type.MISSING_SKU")).toBe("Missing SKU");
+    expect(t("issue.list.newBadge")).toBe("New");
+    expect(t("dashboard.counts.high", { count: 1 })).toBe("1 high-severity issue");
+    expect(t("dashboard.counts.high", { count: 5 })).toBe("5 high-severity issues");
+    expect(t("issue.snooze.days", { count: 7 })).toBe("7 days");
+    expect(t("issue.snooze.days", { count: 14 })).toBe("14 days");
   });
   it("missing key returns the key", () => {
     const t = makeT("en");

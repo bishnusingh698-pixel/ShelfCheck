@@ -22,8 +22,6 @@ export function testDb(): PrismaClient {
 
 const TABLES = [
   "RateLimitBucket",
-  "TelegramLinkToken",
-  "NotificationLog",
   "WebhookEvent",
   "Job",
   "IgnoreRule",
@@ -56,7 +54,6 @@ export async function createShop(
     timezone: string;
     currency: string;
     uiLocale: string;
-    notifyLocale: string;
     settings: Record<string, unknown>;
     lastScanAt: Date;
     uninstalledAt: Date;
@@ -72,7 +69,6 @@ export async function createShop(
       timezone: overrides.timezone ?? "UTC",
       currency: overrides.currency ?? "USD",
       uiLocale: overrides.uiLocale ?? "en",
-      notifyLocale: overrides.notifyLocale ?? "en",
       shopHandle: overrides.shopHandle ?? `test-${n}`,
       settings: (overrides.settings ?? {}) as never,
       lastScanAt: overrides.lastScanAt ?? null,

@@ -1,6 +1,6 @@
 # ShelfCheck — Build Progress
 
-Status: **Phases 0-10 complete (notifications: Resend digest + Svix webhook + unsubscribe; 22 notification tests green). Next: Phase 11 (Telegram).**
+Status: **Phases 0-9 complete. Phases 10-11 Removed by amendment 001 (email digest + Telegram alerts removed from v1; plan prices unchanged; notifications are in-app only). Next: Phase 12 (Localization).**
 
 ## Resume protocol
 1. Read `PROGRESS.md` (this file), then `DECISIONS.md` (titles), then the current phase in `docs/SPEC.md`.
@@ -49,7 +49,7 @@ Status: **Phases 0-10 complete (notifications: Resend digest + Svix webhook + un
 - Webhook layer complete: `app/webhooks/` (intake, processors, uninstall, redact), routes `webhooks.app.uninstalled.tsx`, `webhooks.app.scopes_update.tsx`, `webhooks.app-subscriptions.update.tsx`, `webhooks.compliance.tsx`, `webhooks.bulk-operations.finish.tsx`; all HMAC-verified via `authenticate.webhook`, intake→webhook_events→`webhook_process` job, compliance payloads scrubbed to `{shop_domain}`.
 - `app/billing/subscription.server.ts` (Managed Pricing read path, 5-min plan cache), `app/lib/shop-info.server.ts` (isolated `shop` query), `app/lib/shop-bootstrap.server.ts` (afterAuth hook: upsert shop, sync tz/currency/handle, trigger install scan once).
 - `app/jobs/executor.server.ts` (`makeJobExecutor`, `adminContextExecutor`, `adminContextExecutorFromUnauthenticated`, `MissingSessionError`), `app/jobs/handler-map.server.ts` (zod-validated handler map + `productionDrainHandler`), `app/routes/jobs.tick.tsx` (cron entry: timing-safe secret, rate-limited, bounded drain).
-- **Integration tests: `tests/integration/webhooks.test.ts` (17 tests)** — HMAC-signed Requests against the real route actions (401 on tamper, dedupe on webhookId, PII scrubbing, unknown-topic ack, idempotent replay), uninstall semantics (sessions deleted synchronously, pending jobs + telegram tokens cleared, catalog kept), scopes_update (scopes stored, auto-tag disabled when write_products dropped), all three compliance topics end-to-end, subscription plan mapping + cache behavior, processor registry.
+- **Integration tests: `tests/integration/webhooks.test.ts` (17 tests)** — HMAC-signed Requests against the real route actions (401 on tamper, dedupe on webhookId, PII scrubbing, unknown-topic ack, idempotent replay), uninstall semantics (sessions deleted synchronously, pending jobs cleared, catalog kept), scopes_update (scopes stored, auto-tag disabled when write_products dropped), all three compliance topics end-to-end, subscription plan mapping + cache behavior, processor registry.
 - **Bugs found and fixed by those tests:** (1) D-29 — `authenticate.webhook` delivers topics in the library's storage form (`APP_SCOPES_UPDATE`); processors are now dual-registered under both forms or EVERY production webhook would have been acknowledged unprocessed. (2) D-30 — `shop/redact` cascade-deletes its own webhook event and job rows mid-run; `completeJob`/`failJob`/event bookkeeping now tolerate Prisma P2025 at exactly those update sites.
 - `tests/helpers/shopify-test-env.ts` — first-import env bootstrap (SHOPIFY_APP_URL/API_KEY/API_SECRET/SCOPES) because `app/shopify.server.ts` evaluates `shopifyApp()` at import time and throws on an empty appUrl.
 - `npm run verify` full gate green: 57 unit + 45 integration (was 28), i18n 0 errors/10 warnings, typecheck+lint clean, RSS 261 MB (< 300 MB), secrets:check clean (107 files).
@@ -65,16 +65,14 @@ Status: **Phases 0-10 complete (notifications: Resend digest + Svix webhook + un
 - **Integration (12 tests, `tests/integration/ui-routes.test.ts`)**: dashboard loader aggregates, onboarding branch, layout locale resolution (English default, harness-only pseudo, merchant language wins), document-title meta in en + en-XA, scan resource GET/POST + gate rejections.
 - `npm run verify` green: i18n 0 errors (12 locales, en 220 strings), typecheck + lint clean, 57 unit + 77 integration, secrets:check clean; e2e green via `npm run test:e2e`.
 
-## Phase 10: Email digest (this commit)
-- **Modules (`app/notifications/`)**: `digest.server.ts` (`digestPeriodKey` = ISO week in shop tz — canonical algorithm, D-41; `DigestSelection {newIssues, totalOpen, periodKey}`; `runDigestSend` → sent/already-sent/skipped-disabled/skipped-empty/skipped-free/failed; `sendDueDigests` with per-tick smoothing), `email-render.server.ts` (HTML + plain text, plural variants, `escapeHtml`), `resend.server.ts` (transport + error mapping), `send-budget.server.ts` (daily/monthly usage from NotificationLog), `unsubscribe.server.ts` (HMAC `v1.` token, public URL builder).
-- **Routes**: `unsubscribe.tsx` (one-click, no auth, signature-gated; disables the digest and keeps the rest of settings), `resend.webhook.tsx` (Svix verify — `svix-id`/`svix-timestamp`/`svix-signature`, 5-min tolerance, constant-time; dedupe via unique `webhook_events.webhookId`; 401 on bad signature, 200 dupes) — path `/resend/webhook` per SPEC; HUMAN_STEPS.md corrected to match.
-- **Wiring**: `digest_send` job kind + handler; `NotificationLog.providerId` (migration `20261010063255_add_notification_provider_id`) stores the Resend email id so `email.delivered`/`email.bounced`/`email.complained` events update the matching log row; `app.settings.tsx` lists recent delivery problems; emails deep link via `admin.shopify.com/store/<handle>/apps/...` (`appPath`), never app-local URLs.
-- **Tests**: `tests/integration/notifications.test.ts` (22) — period keys (incl. 2026-W53 year boundary), selection, send flow, plurals, skip-empty, budget deferral + per-tick smoothing, unsubscribe round-trip + route, Svix verify + dedupe + bounce display. Spec gate for Phase 10 green.
-- **Decisions**: D-39, D-40, D-41.
+## Phase 10: Removed by amendment 001
+Was "Email digest" (Resend + Svix webhook + unsubscribe). Removed by `docs/spec-amendments/001-remove-email-telegram.md`: routes `unsubscribe.tsx` + `resend.webhook.tsx`, the whole `app/notifications/` folder, `digest_send`/`notify_new_issues` job kinds, `NotificationLog` + `TelegramLinkToken` tables, `shops.notify_locale`/`shops.last_digest_at`, `issues.notified_email_at`/`notified_telegram_at` (migration `20261011_remove_email_telegram_notifications`, up→down→up verified), the Resend/Telegram env vars, and the 22 notification tests. See `docs/phase-reports/amendment-001.md`.
+
+## Phase 11: Removed by amendment 001
+Was "Telegram". Never started; nothing to remove beyond the settings UI gating hooks and env vars covered above.
 
 ## Next
-1. Phase 11: Telegram (Pro) — `telegram.server.ts`, `telegram-link.server.ts`, `telegram.webhook.tsx`, settings connect UI + test button.
-2. Phase 12 (10 locales + listings), 13 (hardening, live-acceptance script, acceptance report).
+1. Phase 12 (10 locales + listings), 13 (hardening, live-acceptance script, acceptance report).
 
 ## Phase 7 (this commit)
 - Watchers: `app/webhooks/product-sync.server.ts` (cursor-paged single-product read mirroring the bulk query, fingerprint loop guard, targeted duplicate re-check over old+new values, value-scoped resolution), `app/webhooks/inventory-sync.server.ts` (item→variants mapping, only PUBLISHED_ZERO_INVENTORY re-evaluated), routes `webhooks.products.tsx` + `webhooks.inventory-levels.update.tsx`.
@@ -89,13 +87,12 @@ export DATABASE_URL="postgresql://openhands:openhands@127.0.0.1:5432/shelfcheck_
 export TEST_DATABASE_URL="$DATABASE_URL"
 export ENCRYPTION_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
 export SIGNING_KEY="v1:$(node -e 'process.stdout.write(require("crypto").randomBytes(32).toString("base64"))')"
-export RESEND_WEBHOOK_SECRET="whsec_$(node -e 'process.stdout.write(require("crypto").randomBytes(24).toString("base64"))')"
-npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit (57), integration (123), secrets:check
+npm run verify   # i18n:pseudo, i18n:check, typecheck, lint, fixtures:generate, unit, integration, secrets:check
 ```
-Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 57 unit + 123 integration passed (webhooks 17, watchers 20, queue 13, session-storage 8, scan-engine 6, jsonl-memory, ui-routes 12, notifications 22), RSS 265 MB, secrets:check clean.
+Last full run: **exit 0** — i18n 0 errors/10 warnings (missing locale files only), typecheck+lint clean, 55 unit + 101 integration passed (webhooks 17, watchers 20, queue 13, session-storage 8, scan-engine 6, jsonl-memory, ui-routes 12) after the amendment-001 removal of the 22-test notifications suite, e2e 13 passed/3 skipped (en + en-XA), secrets:check clean (159 files).
 
 ## Known issues / rate-limit incidents
 - None. (Model-request budget: target <=30/min, batching tool calls.)
-- Live checks (dev store, Neon, Resend, Telegram, cron) impossible without credentials — mapped to `HUMAN_STEPS.md`.
+- Live checks (dev store, Neon, cron) impossible without credentials — mapped to `HUMAN_STEPS.md`.
 - i18n:check warnings are only the 10 not-yet-written locale files (de, fr, es, pt-BR, pt-PT, zh-CN, ja, it, nl, sv) — Phase 12.
 

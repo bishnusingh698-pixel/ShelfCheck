@@ -116,21 +116,7 @@ Top-level query: **`productVariants`** (ProductVariantConnection) — "Search fo
 - Sources: https://render.com/blog/free-tier ("750 hours of compute time every month", "spin down after 15 minutes of inactivity"); secondary confirmation of 512 MB / 0.1 CPU (codecapsules + servercompass summaries of Render's current free tier).
 - Math: pinging every 10 min keeps the instance awake ~24×31 = 744 h ≤ 750 h. **Tight** — cron-job.org every 10 minutes is the cadence; the app must be able to survive a restart without losing work (tick idempotency + DB queue, which is why nothing depends on in-process memory).
 
-## 12. Resend
-
-**[DOC]** Webhooks are delivered as Svix-signed envelopes with headers `svix-id`, `svix-timestamp`, `svix-signature` (Base64 HMAC list, space-delimited, `v1,` prefix); secret is `whsec_...`; verify with the `svix` library or manually (HMAC-SHA256 over `id.timestamp.payload`); dedupe on `svix-id`.
-- Sources: https://resend.com/docs/webhooks/verify-webhooks-requests ; https://docs.svix.com/receiving/verifying-payloads/how-manual ; event types `email.bounced`, `email.delivered`, `email.complained` (resend-skills reference + Resend docs).
-- **[LIVE]** Free-tier exact quotas (100/day, 3,000/month per the spec) to be confirmed on the Resend pricing page at setup time (HUMAN_STEPS §0.3); the app's send budget is env-configurable (`RESEND_DAILY_LIMIT`, `RESEND_MONTHLY_LIMIT`) with those defaults.
-- `List-Unsubscribe` / `List-Unsubscribe-Post` headers: set as custom headers on the send request (Resend supports arbitrary headers; **[LIVE]** confirm in dashboard on first real send).
-
-## 13. Telegram
-
-**[DOC]** `setWebhook` accepts `secret_token` (1–256 chars, `A-Z a-z 0-9 _ -`); Telegram then sends header **`X-Telegram-Bot-Api-Secret-Token`** "with the secret token as content" on every webhook request.
-- Source: https://core.telegram.org/bots/api#setwebhook
-- Deep links: `https://t.me/<bot>?start=<payload>` (start parameter handling documented under `start` command); 403 on blocked bot; 429 responses carry `parameters.retry_after` (documented in the Bot API "Too Many Requests" section). Batch alerts ≤ 1/hour/shop is our own policy.
-- **[LIVE]** setWebhook call happens at connect time; test message button sends a real message (HUMAN_STEPS §5).
-
-## 14. Partner Dashboard listing limits
+## 12. Partner Dashboard listing limits
 
 **[DOC]** App name must be **< 30 characters** — the spec's requested English title (41 chars) cannot be the app name (D-8).
 - Source: https://community.shopify.dev/t/app-names-must-be-less-than-30-characters/574 (and Partner Dashboard validation).
@@ -158,12 +144,11 @@ verified input fields used: `optionValues` (product options for the variant), `p
 
 ---
 
-## Pending live verifications (all mapped in HUMAN_STEPS §7)
+## Pending live verifications (all mapped in HUMAN_STEPS §6)
 
 1. `availablePublicationsCount` readability with only `read_products,read_inventory` (D-5).
 2. `currentAppInstallation.activeSubscriptions` field names under 2026-07.
 3. `shop { currencyCode }` exact field path under 2026-07.
 4. Listing editor field limits.
-5. Resend quota numbers on the pricing page.
 
-All five are isolated behind single functions/constants so a correction is a one-line change.
+All four are isolated behind single functions/constants so a correction is a one-line change.

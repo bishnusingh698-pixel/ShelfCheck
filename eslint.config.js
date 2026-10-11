@@ -6,7 +6,7 @@ import globals from "globals";
  * Brand terms may appear as literal JSX text (logos, codes).
  * Everything else user-facing must go through t().
  */
-const BRAND = new Set(["ShelfCheck", "Shopify", "Telegram", "Matrixify", "SKU", "GTIN", "CSV"]);
+const BRAND = new Set(["ShelfCheck", "Shopify", "Matrixify", "SKU", "GTIN", "CSV"]);
 
 const localPlugin = {
   rules: {

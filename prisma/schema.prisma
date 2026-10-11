@@ -43,7 +43,6 @@ model Shop {
   planStatus    String?
   planCheckedAt DateTime?
   uiLocale      String?
-  notifyLocale  String?
   timezone      String?
   currency      String?
   shopHandle    String?
@@ -51,15 +50,12 @@ model Shop {
   installedAt   DateTime  @default(now())
   uninstalledAt DateTime?
   lastScanAt    DateTime?
-  lastDigestAt  DateTime?
 
   scans         Scan[]
   variants      VariantIndex[]
   issues        Issue[]
   ignoreRules   IgnoreRule[]
   jobs          Job[]
-  notifications NotificationLog[]
-  telegramLink  TelegramLinkToken[]
 
   @@index([uninstalledAt])
 }
@@ -140,8 +136,6 @@ model Issue {
   lastSeenScanId         String?
   firstSeenAt            DateTime  @default(now())
   resolvedAt             DateTime?
-  notifiedEmailAt        DateTime?
-  notifiedTelegramAt     DateTime?
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -196,34 +190,6 @@ model Job {
 
   @@index([status, runAt])
   @@index([kind, status])
-}
-
-model NotificationLog {
-  id          String   @id @default(cuid())
-  shopId      String
-  channel     String // email | telegram
-  kind        String // digest | alert
-  periodKey   String
-  status      String
-  errorCode   String?
-  providerId  String?
-  sentAt      DateTime @default(now())
-
-  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@unique([shopId, channel, kind, periodKey])
-  @@index([providerId])
-}
-
-model TelegramLinkToken {
-  tokenHash String
-  shopId    String
-  expiresAt DateTime
-  usedAt    DateTime?
-
-  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@id([tokenHash])
 }
 
 model RateLimitBucket {

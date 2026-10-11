@@ -71,10 +71,8 @@ export default function PlansRoute() {
                 ["issueVisibilityLimit", "plans.feature.issuesShown"],
                 ["variantCap", "plans.feature.variantCap"],
                 ["webhookWatchers", "plans.feature.watchers"],
-                ["emailDigest", "plans.feature.digest"],
                 ["csvExportRows", "plans.feature.csv"],
                 ["autoTag", "plans.feature.autoTag"],
-                ["telegram", "plans.feature.telegram"],
               ] as Array<[keyof PlanLimits, string]>
             ).map(([feature, labelKey]) => (
               <s-table-row key={feature}>

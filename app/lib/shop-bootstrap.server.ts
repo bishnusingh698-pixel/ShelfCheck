@@ -13,7 +13,7 @@ import { adminContextExecutor } from "../jobs/executor.server.js";
  *
  *  - upserts the shops row (the ONLY writer of shop identity at auth time),
  *  - syncs time zone, currency, and admin handle from the Shop object,
- *  - defaults uiLocale to the merchant's admin locale and notifyLocale to it,
+ *  - defaults uiLocale to the merchant's admin locale,
  *  - starts the INSTALL scan exactly once (never on token re-auth).
  *
  * Idempotent: afterAuth fires on install AND whenever offline tokens are
@@ -40,7 +40,6 @@ export async function ensureShopRecord(session: Session): Promise<{ shopId: stri
       scopes: session.scope ?? null,
       plan: "free",
       uiLocale: locale,
-      notifyLocale: locale,
       settings: SHOP_SETTINGS_SCHEMA.parse({}) as never,
     },
   });
@@ -54,7 +53,7 @@ export async function bootstrapAfterAuth(session: Session, admin: AdminApiContex
   try {
     await updateShopInfo(shopId, session.shop, adminContextExecutor(admin));
   } catch (error) {
-    // Shop info is an optimization (digest/scheduler defaults, admin links);
+    // Shop info is an optimization (scheduler defaults, admin links);
     // failing the auth flow over it would block the merchant entirely.
     logger.warn({ err: error, shopId }, "shop info refresh failed after auth");
   }

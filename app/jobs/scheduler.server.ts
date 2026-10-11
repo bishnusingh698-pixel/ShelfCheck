@@ -5,7 +5,7 @@ import { canScanNow } from "../billing/gating.js";
 import { enqueue, isUniqueViolation } from "./queue.server.js";
 
 /**
- * Scheduler: computes "due" scheduled scans and digests in the SHOP's time zone.
+ * Scheduler: computes "due" scheduled scans in the SHOP's time zone.
  * Free: 1 scan per calendar month. Starter: weekly. Pro: daily.
  * A scheduled scan is due when the current period's scan has not run yet and
  * the configured hour has passed on the configured day.

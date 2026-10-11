@@ -18,10 +18,8 @@ export interface PlanLimits {
   /** Max variants analyzed per scan. */
   variantCap: number;
   webhookWatchers: boolean;
-  emailDigest: boolean;
   csvExportRows: number;
   autoTag: boolean;
-  telegram: boolean;
   scanCooldownMinutes: number;
   trialDays: number | null;
 }
@@ -35,10 +33,8 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     issueVisibilityLimit: 50,
     variantCap: 500,
     webhookWatchers: false,
-    emailDigest: false,
     csvExportRows: 50,
     autoTag: false,
-    telegram: false,
     scanCooldownMinutes: 0,
     trialDays: null,
   },
@@ -50,10 +46,8 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     issueVisibilityLimit: 0,
     variantCap: 5_000,
     webhookWatchers: true,
-    emailDigest: true,
     csvExportRows: 0,
     autoTag: false,
-    telegram: false,
     scanCooldownMinutes: 10,
     trialDays: 7,
   },
@@ -65,10 +59,8 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     issueVisibilityLimit: 0,
     variantCap: 50_000,
     webhookWatchers: true,
-    emailDigest: true,
     csvExportRows: 0,
     autoTag: true,
-    telegram: true,
     scanCooldownMinutes: 10,
     trialDays: 7,
   },

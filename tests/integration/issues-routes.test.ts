@@ -420,7 +420,7 @@ describe("rules (app.rules)", () => {
 });
 
 describe("settings (app.settings)", () => {
-  it("saves issue types, catalog scope, digest, auto-tag, and language", async () => {
+  it("saves issue types, catalog scope, auto-tag, and language", async () => {
     const db = testDb();
 
     const types = await settingsRoute.action(
@@ -453,24 +453,6 @@ describe("settings (app.settings)", () => {
     // Earlier section survives the merge.
     expect(settings2.enabledIssueTypes).toEqual(["MISSING_SKU", "DUPLICATE_SKU"]);
 
-    const digest = await settingsRoute.action(
-      routeArgs(
-        formPost("/app/settings", {
-          intent: "digest",
-          enabled: "true",
-          email: "owner@example.com",
-          day: "1",
-          hour: "9",
-          skipWhenEmpty: "true",
-        }),
-      ),
-    );
-    expect(((await json(digest as unknown as Response)) as { ok: boolean }).ok).toBe(true);
-    const row3 = await db.shop.findUniqueOrThrow({ where: { id: "ui-harness-shop" } });
-    expect(row3.settings).toMatchObject({
-      digest: { enabled: true, email: "owner@example.com", day: 1, hour: 9, skipWhenEmpty: true },
-    });
-
     const autoTag = await settingsRoute.action(
       routeArgs(formPost("/app/settings", { intent: "autoTag", enabled: "true" })),
     );
@@ -479,17 +461,16 @@ describe("settings (app.settings)", () => {
     expect((row4.settings as Record<string, unknown>).autoTag).toBe(true);
 
     const language = await settingsRoute.action(
-      routeArgs(formPost("/app/settings", { intent: "language", uiLocale: "de", notifyLocale: "fr" })),
+      routeArgs(formPost("/app/settings", { intent: "language", uiLocale: "de" })),
     );
     expect(((await json(language as unknown as Response)) as { ok: boolean }).ok).toBe(true);
     const row5 = await db.shop.findUniqueOrThrow({ where: { id: "ui-harness-shop" } });
     expect(row5.uiLocale).toBe("de");
-    expect(row5.notifyLocale).toBe("fr");
   });
 
   it("rejects invalid input", async () => {
     const badLocale = await settingsRoute.action(
-      routeArgs(formPost("/app/settings", { intent: "language", uiLocale: "xx", notifyLocale: "fr" })),
+      routeArgs(formPost("/app/settings", { intent: "language", uiLocale: "xx" })),
     );
     expect((badLocale as unknown as Response).status).toBe(400);
 
@@ -502,7 +483,7 @@ describe("settings (app.settings)", () => {
   it("flags plan-gated features in the loader", async () => {
     const data = await settingsRoute.loader(routeArgs(request("/app/settings")));
     expect(data.plan).toBe("starter");
-    expect(data.featureEnabled).toEqual({ digest: true, autoTag: false, telegram: false });
+    expect(data.featureEnabled).toEqual({ autoTag: false });
   });
 });
 

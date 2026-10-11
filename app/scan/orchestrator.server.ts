@@ -279,19 +279,6 @@ export async function runDetection(params: {
       client,
     );
   }
-
-  // Enqueue notifications for newly opened issues (digest/alert jobs check plan).
-  if (opened > 0) {
-    await enqueue(
-      {
-        kind: "notify_new_issues",
-        payload: { scanId, openedCount: opened },
-        shopId,
-        dedupeKey: `notify:${scanId}`,
-      },
-      client,
-    );
-  }
   return { opened, resolved, regrown, score };
 }
 

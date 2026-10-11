@@ -5,7 +5,7 @@ import { fallbackChain } from "./config.js";
 import { translateTemplate, type Messages } from "./translate.js";
 
 /**
- * Server i18n (loaders, emails, Telegram). Loads locales/*.json along the
+ * Server i18n (loaders). Loads locales/*.json along the
  * fallback chain from config.ts and renders through the pure shared ICU
  * renderer in translate.ts — the same code the browser bundle uses.
  */
