@@ -425,3 +425,21 @@ Why: the operating mode requires following the current spec; v3's hard constrain
 Risk if wrong: a merchant who relied on digests loses that feature — acceptable, v3 is the contract.
 Evidence: docs/SPEC.md (v3, verbatim); removal checklist docs/phase-reports/upgrade-v3.md.
 Status: Pending user feedback
+
+## D-43: Listing app name is 41 characters; the 30-char "name" limit applies to a different field
+Type: deviation
+Phase: 11
+Choice: the spec mandates the exact English title "ShelfCheck: Duplicate SKU & Catalog Audit" (41 chars) for the listing, while the Partner Dashboard "App name" field commonly rejects names over 30 characters. We keep the mandated title in `listing/*.md` and record that, if the dashboard form enforces a shorter name field, the human submits the name as "ShelfCheck" (10 chars) and uses the full mandated title as the listing headline copy. This is a submission-time field-mapping decision, not a content change.
+Why: the spec's `<localization>` item 12 fixes the English title verbatim; api-notes §14 records that limits are enforced by the dashboard form and re-checked at submission time.
+Risk if wrong: none in code; a human may need to split the title across fields in the dashboard.
+Evidence: docs/SPEC.md localization item 12; listing/en.md; HUMAN_STEPS.md §8.
+Status: Ready for human verification
+
+## D-44: zh-CN and ja plurals use exact-match arms (=0/=1) instead of 'one'
+Type: decision
+Phase: 11
+Choice: CLDR gives zh and ja only the `other` plural category. The i18n checker requires every arm present in the English template to appear in the translation while also rejecting arms that are not CLDR categories for the locale — so a literal `one{...}` arm in zh/ja would fail both ways. The ICU subset renderer (app/i18n/translate.ts) supports exact-match arms, so zh-CN/ja translations render 0 and 1 via `=0`/`=1` arms plus `other`, and use `#` for the count inside arms.
+Why: correct CLDR behavior for CJK locales while satisfying the parity checker; no runtime change needed.
+Risk if wrong: none — covered by unit tests (security-and-i18n.test.ts "zh-CN and ja use exact-match arms").
+Evidence: locales/zh-CN.json, locales/ja.json; tests/unit/security-and-i18n.test.ts; i18n/GLOSSARY.md note.
+Status: Verified

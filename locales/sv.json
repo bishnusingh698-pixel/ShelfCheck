@@ -289,7 +289,7 @@
     "scanStarted": "Genomsökning startad",
     "ruleAdded": "Regel tillagd",
     "ruleDeleted": "Regel borttagen",
-    "undone": "Ångradet"
+    "undone": "Ångrad"
   },
   "csv": {
     "export": "Exportera CSV",

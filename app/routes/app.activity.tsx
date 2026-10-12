@@ -6,7 +6,7 @@ import { useI18n } from "../i18n/i18n.context";
 import { formatDateTime } from "../i18n/format";
 import { translateTemplate, type Messages } from "../i18n/translate.js";
 import { activityFeed, markActivitySeen, ACTIVITY_EVENT_KINDS } from "../activity/queries.server.js";
-import { activitySentence, type ActivityEventKind } from "../activity/events.server.js";
+import { activitySentence, type ActivityEventKind } from "../activity/kinds.js";
 
 /**
  * /app/activity (spec <in_app_alerts>): the activity feed replaces the v2
