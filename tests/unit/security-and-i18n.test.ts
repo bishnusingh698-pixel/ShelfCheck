@@ -113,7 +113,7 @@ describe("graphql throttle handling", () => {
 });
 
 describe("admin URLs", () => {
-  it("https URLs for email/telegram/csv", () => {
+  it("https URLs for csv and external links", () => {
     expect(adminHttpsUrl("myshop", "/products/123")).toBe("https://admin.shopify.com/store/myshop/products/123");
     expect(productAdminPath("myshop", "gid://shopify/Product/123")).toBe("https://admin.shopify.com/store/myshop/products/123");
   });
@@ -125,14 +125,61 @@ describe("admin URLs", () => {
 describe("server i18n", () => {
   it("translates with placeholders and plurals", () => {
     const t = makeT("en");
-    expect(t("email.digest.newIssues", { count: 0 })).toBe("No new issues this week");
-    expect(t("email.digest.newIssues", { count: 1 })).toBe("1 new issue this week");
-    expect(t("email.digest.newIssues", { count: 5 })).toBe("5 new issues this week");
-    expect(t("email.digest.stillOpen", { count: 41 })).toBe("41 issues are still open");
+    expect(t("dashboard.sinceLastVisit.newIssues", { count: 7, high: 2 })).toBe("7 new issues since your last visit (2 high)");
+    expect(t("dashboard.sinceLastVisit.newIssues", { count: 1, high: 0 })).toBe("1 new issue since your last visit (none high)");
+    expect(t("dashboard.sinceLastVisit.newIssues", { count: 0, high: 0 })).toBe("No new issues since your last visit (none high)");
     expect(t("issue.type.MISSING_SKU")).toBe("Missing SKU");
   });
   it("missing key returns the key", () => {
     const t = makeT("en");
     expect(t("no.such.key")).toBe("no.such.key");
+  });
+});
+
+describe("CLDR plurals per locale (spec counts 0, 1, 2, 5, 1,000,000)", () => {
+  const COUNTS = [0, 1, 2, 5, 1_000_000] as const;
+  const LOCALES = [
+    "en", "de", "fr", "es", "pt-BR", "pt-PT", "zh-CN", "ja", "it", "nl", "sv",
+  ] as const;
+
+  it.each(LOCALES)("renders a plural sentence for every count in %s", (locale) => {
+    const t = makeT(locale);
+    for (const count of COUNTS) {
+      const out = t("dashboard.sinceLastVisit.newIssues", { count, high: 2 });
+      // The sentence must mention the count (or a zero-word) and must never
+      // leak an unrendered ICU arm like "{count, plural," or "#".
+      expect(out).not.toMatch(/\{count,\s*plural/);
+      expect(out).not.toMatch(/one\s*\{|other\s*\{/);
+      expect(out).not.toContain("#");
+      expect(out.length).toBeGreaterThan(10);
+      const expectedNumber = new Intl.NumberFormat(locale).format(count);
+      // For 0 the template renders a localized "none" word instead of 0…
+      // unless the locale writes the digit (zh/ja use =0 arms with words).
+      if (count !== 0 && count !== 1) {
+        expect(out).toContain(expectedNumber);
+      }
+    }
+  });
+
+  it("zh-CN and ja use exact-match arms: one and zero read naturally", () => {
+    for (const locale of ["zh-CN", "ja"] as const) {
+      const t = makeT(locale);
+      const zero = t("issue.list.selected", { count: 0 });
+      const one = t("issue.list.selected", { count: 1 });
+      const two = t("issue.list.selected", { count: 2 });
+      // CJK locales have no `one` category: =0/=1 exact arms render.
+      expect(zero).not.toContain("1");
+      expect(one).not.toContain("2");
+      expect(two).toContain(new Intl.NumberFormat(locale).format(2));
+    }
+  });
+
+  it("every supported locale renders the weekly summary with a placeholder", () => {
+    for (const locale of LOCALES) {
+      const t = makeT(locale);
+      const out = t("dashboard.weeklySummary.newIssues", { count: 3, last: 1 });
+      expect(out).toContain(new Intl.NumberFormat(locale).format(3));
+      expect(out).toContain(new Intl.NumberFormat(locale).format(1));
+    }
   });
 });

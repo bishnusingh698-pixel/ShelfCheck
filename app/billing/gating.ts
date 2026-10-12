@@ -50,18 +50,21 @@ export function variantCap(plan: string): number {
   return planLimits(plan).variantCap;
 }
 
-export function featureEnabled(plan: string, feature: "watchers" | "digest" | "autoTag" | "telegram"): boolean {
+export function featureEnabled(plan: string, feature: "watchers" | "weeklySummary" | "autoTag"): boolean {
   const limits = planLimits(plan);
   switch (feature) {
     case "watchers":
       return limits.webhookWatchers;
-    case "digest":
-      return limits.emailDigest;
+    case "weeklySummary":
+      return limits.weeklySummary;
     case "autoTag":
       return limits.autoTag;
-    case "telegram":
-      return limits.telegram;
   }
+}
+
+/** Days of activity history visible on the plan. */
+export function activityHistoryDays(plan: string): number {
+  return planLimits(plan).activityHistoryDays;
 }
 
 export function csvExportRows(plan: string): number {

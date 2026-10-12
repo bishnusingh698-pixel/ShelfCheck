@@ -127,6 +127,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       lastSeenScanId: issue.lastSeenScanId,
       intentionalMemberCount: issue.intentionalMemberCount,
       details: (issue.details ?? {}) as Record<string, unknown>,
+      // Spec <in_app_alerts>: "New" = open and first seen after the marker.
+      isNew: issue.status === "open" && shop.activitySeenAt != null && issue.firstSeenAt > shop.activitySeenAt,
     },
     members,
     shopHandle: handle,

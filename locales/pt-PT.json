@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Encontre e corrija problemas do catálogo antes que interrompam uma expedição.",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "Iniciar sessão",
+    "button": "Iniciar sessão",
+    "shopLabel": "Domínio da loja",
+    "shopDetails": "exemplo.myshopify.com",
+    "error": {
+      "missingShop": "Introduza o domínio da sua loja para iniciar sessão",
+      "invalidShop": "Introduza um domínio de loja válido para iniciar sessão"
+    }
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "issues": "Problemas",
+    "rules": "Regras",
+    "settings": "Definições",
+    "plans": "Planos",
+    "activity": "Atividade",
+    "activityBadge": "Novo"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "retry": "Tentar novamente",
+    "undo": "Anular",
+    "close": "Fechar",
+    "copySku": "Copiar SKU",
+    "copied": "Copiado para a área de transferência",
+    "openInAdmin": "Abrir na administração da Shopify",
+    "loading": "A carregar…",
+    "errorTitle": "Ocorreu um erro",
+    "errorBody": "Não foi possível concluir a última ação. Pode tentar novamente.",
+    "empty": "Ainda não há nada aqui"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "SKU em falta",
+      "DUPLICATE_SKU": "SKU duplicado",
+      "MISSING_BARCODE": "Código de barras em falta",
+      "DUPLICATE_BARCODE": "Código de barras duplicado",
+      "INVALID_BARCODE": "Código de barras inválido",
+      "PUBLISHED_ZERO_INVENTORY": "Publicado sem inventário",
+      "VARIANT_MISSING_IMAGE": "Imagem de variante em falta",
+      "MISSING_WEIGHT": "Peso em falta",
+      "MISSING_COST": "Custo em falta",
+      "COMPARE_AT_INVALID": "Preço comparativo inválido",
+      "ZERO_PRICE": "Preço zero"
+    },
+    "severity": {
+      "high": "Alta",
+      "medium": "Média",
+      "low": "Baixa"
+    },
+    "status": {
+      "open": "Aberto",
+      "snoozed": "Adiado",
+      "ignored": "Ignorado",
+      "intentional": "Intencional",
+      "resolved": "Resolvido"
+    },
+    "hint": {
+      "scientific_notation": "Parece notação científica (uma exportação em CSV pode ter corrompido este código de barras)",
+      "likely_dropped_leading_zero": "Um valor de 11 dígitos; um zero à esquerda pode ter-se perdido",
+      "inner_whitespace": "Contém espaços dentro do valor"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "O preço comparativo é inferior ao preço",
+      "COMPARE_AT_INVALID_equal": "O preço comparativo é igual ao preço",
+      "case_or_space_only": "Estes SKUs diferem apenas na capitalização ou nos espaços",
+      "group_grew": "Uma nova variante juntou-se a este grupo"
+    },
+    "actions": {
+      "snooze": "Adiar",
+      "ignore": "Ignorar",
+      "intentional": "Marcar como intencional",
+      "resolve": "Marcar como resolvido",
+      "unsnooze": "Retomar"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 dias} =30 {30 dias} =90 {90 dias} other {{count} dias}}",
+      "banner": "Adiado até {date}. Será reaberto automaticamente."
+    },
+    "list": {
+      "title": "Problemas",
+      "empty": "Nenhum problema corresponde aos filtros atuais. O seu catálogo está em bom estado.",
+      "filterType": "Tipo de problema",
+      "filterSeverity": "Gravidade",
+      "filterStatus": "Estado",
+      "filterVendor": "Fornecedor",
+      "search": "Pesquisar por SKU ou título do produto",
+      "sortBy": "Ordenar por",
+      "sortSeverity": "Gravidade",
+      "sortFirstSeen": "Primeira deteção",
+      "bulkSnooze": "Adiar a seleção",
+      "bulkIgnore": "Ignorar a seleção",
+      "bulkIntentional": "Marcar a seleção como intencional",
+      "selected": "{count, plural, =0 {Nenhum problema selecionado} one {# problema selecionado} other {# problemas selecionados}}",
+      "newBadge": "Novo",
+      "groupMembers": "Todos os membros deste grupo",
+      "overCapHidden": "{count, plural, one {# problema está além do limite de apresentação do seu plano} other {# problemas estão além do limite de apresentação do seu plano}}",
+      "previous": "Anterior",
+      "next": "Seguinte",
+      "pageStatus": "Página {page} de {pageCount} ({total} problemas)",
+      "actions": "Ações",
+      "newOnlyFilter": "Apenas novos"
+    }
+  },
+  "dashboard": {
+    "title": "Estado do catálogo",
+    "healthScore": "Pontuação de estado",
+    "band": {
+      "excellent": "Excelente",
+      "good": "Bom",
+      "needs_attention": "Precisa de atenção",
+      "critical": "Crítico"
+    },
+    "counts": {
+      "title": "Problemas por gravidade",
+      "high": "{count, plural, one {# problema de gravidade alta} other {# problemas de gravidade alta}}",
+      "medium": "{count, plural, one {# problema de gravidade média} other {# problemas de gravidade média}}",
+      "low": "{count, plural, one {# problema de gravidade baixa} other {# problemas de gravidade baixa}}",
+      "byType": "Problemas por tipo"
+    },
+    "scan": {
+      "title": "Última análise",
+      "status": {
+        "queued": "Em fila",
+        "running": "A analisar…",
+        "parsing": "A ler resultados…",
+        "completed": "Concluída",
+        "failed": "Falhou",
+        "canceled": "Cancelada"
+      },
+      "runNow": "Analisar agora",
+      "lastScanAt": "Última análise {time}",
+      "never": "Nunca analisado",
+      "cooldown": "Poderá analisar novamente dentro de {minutes} minutos",
+      "failedBody": "A última análise não foi concluída. Pode tentar novamente.",
+      "variants": "{count, plural, one {# variante analisada} other {# variantes analisadas}}"
+    },
+    "usage": {
+      "title": "Utilização do plano",
+      "variants": "{analyzed} de {cap} variantes analisadas",
+      "overCap": "{count, plural, one {# variante estava além do seu plano e não foi analisada} other {# variantes estavam além do seu plano e não foram analisadas}}",
+      "overCapNote": "Duplicados que as envolvem podem ter sido ignorados.",
+      "upgrade": "Atualizar plano"
+    },
+    "trend": {
+      "title": "Novos vs. resolvidos",
+      "last8": "Últimas 8 análises",
+      "new": "Novos",
+      "resolved": "Resolvidos",
+      "scan": "Análise {n}"
+    },
+    "onboarding": {
+      "title": "Configurar o ShelfCheck",
+      "scanRunning": "Primeira análise em curso",
+      "reviewIssues": "Revise os seus problemas",
+      "done": "Concluído",
+      "chooseChecks": "Escolha as verificações a executar"
+    },
+    "sinceLastVisit": {
+      "title": "Desde a sua última visita",
+      "newIssues": "{count, plural, =0 {Nenhum problema novo} one {# problema novo} other {# problemas novos}} desde a sua última visita ({high, plural, =0 {nenhum de gravidade alta} one {# de gravidade alta} other {# de gravidade alta}})",
+      "resolvedIssues": "{count, plural, =0 {Nenhum problema resolvido} one {# problema resolvido} other {# problemas resolvidos}} desde a sua última visita",
+      "scansFinished": "{count, plural, one {# análise concluída} other {# análises concluídas}} desde a sua última visita",
+      "scansFailed": "{count, plural, one {# análise falhou} other {# análises falharam}} desde a sua última visita",
+      "scoreChange": "A pontuação de estado alterou-se em {delta} desde a sua última visita",
+      "markSeen": "Marcar tudo como visto",
+      "nothingNew": "Nada de novo desde a sua última visita",
+      "seenToast": "Atividade marcada como vista.",
+      "undo": "Anular"
+    },
+    "needsAttention": {
+      "title": "Precisa de atenção",
+      "view": "Ver",
+      "openInAdmin": "Abrir na administração da Shopify"
+    },
+    "weeklySummary": {
+      "title": "Esta semana",
+      "newIssues": "{count, plural, =0 {Nenhum problema novo} one {# problema novo} other {# problemas novos}} esta semana (semana passada: {last})",
+      "resolvedIssues": "{count, plural, =0 {Nenhum problema resolvido} one {# problema resolvido} other {# problemas resolvidos}} esta semana (semana passada: {last})",
+      "scoreChange": "Pontuação de estado {direction} {delta} desde a semana passada",
+      "improved": "subiu",
+      "declined": "desceu"
+    }
+  },
+  "scan": {
+    "started": "Análise iniciada. Normalmente demora alguns minutos.",
+    "denied": {
+      "free": "O seu plano inclui uma análise por mês. Atualize o plano para analisar com mais frequência.",
+      "dailyLimit": "Atingiu o limite de análises de hoje para o seu plano.",
+      "cooldown": "Uma análise acabou de ser executada. Aguarde antes de iniciar outra.",
+      "active": "Já existe uma análise em curso."
+    }
+  },
+  "settings": {
+    "title": "Definições",
+    "issueTypes": "Tipos de problema",
+    "issueTypesHelp": "Desative qualquer verificação que não queira ver.",
+    "catalog": {
+      "title": "Âmbito do catálogo",
+      "includeDraft": "Incluir rascunhos",
+      "includeArchived": "Incluir produtos arquivados",
+      "acceptNonGtin": "Aceitar códigos de barras não GS1",
+      "acceptNonGtinHelp": "Quando ativado, apenas os códigos de barras com comprimento GS1 são verificados quanto ao dígito de controlo."
+    },
+    "autoTag": {
+      "title": "Marcação automática",
+      "enable": "Marcar produtos com problemas",
+      "help": "Adiciona a etiqueta \"shelfcheck-fix\" a produtos com problemas abertos. Requer a permissão write_products, que pode conceder aqui.",
+      "requestScope": "Conceder permissão",
+      "granted": "Permissão concedida",
+      "denied": "A marcação automática precisa da permissão write_products."
+    },
+    "language": {
+      "title": "Idioma",
+      "interface": "Idioma da interface"
+    }
+  },
+  "rules": {
+    "title": "Regras para ignorar",
+    "empty": "Ainda não existem regras para ignorar. As regras mantêm os problemas correspondentes fora da sua lista.",
+    "scope": {
+      "sku": "SKU",
+      "variant": "Variante",
+      "product": "Produto",
+      "vendor": "Fornecedor"
+    },
+    "value": "Valor",
+    "issueType": "Tipo de problema (opcional)",
+    "issueTypeAny": "Qualquer tipo",
+    "note": "Nota (opcional)",
+    "add": "Adicionar regra",
+    "delete": "Eliminar",
+    "scopeLabel": "Âmbito da regra"
+  },
+  "plans": {
+    "title": "Planos",
+    "free": "Grátis",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Comparar planos",
+    "current": "Plano atual",
+    "upgrade": "Ver planos e atualizar",
+    "openManagedPricing": "Gerir subscrição na Shopify",
+    "locked": {
+      "watchers": "Os webhooks de monitorização estão disponíveis nos planos Starter e Pro.",
+      "autoTag": "A marcação automática está disponível no plano Pro.",
+      "weeklySummary": "O resumo semanal está disponível nos planos Starter e Pro.",
+      "activityHistory": "Um histórico de atividade mais longo está disponível nos planos pagos."
+    },
+    "feature": {
+      "scans": "Análises agendadas",
+      "manualScans": "Análises manuais por dia",
+      "issuesShown": "Problemas apresentados",
+      "variantCap": "Variantes analisadas",
+      "watchers": "Webhooks de monitorização",
+      "csv": "Exportação em CSV",
+      "autoTag": "Marcação automática",
+      "price": "Preço",
+      "weeklySummary": "Resumo semanal",
+      "activityHistory": "Histórico de atividade (dias)"
+    },
+    "unlimited": "Ilimitado",
+    "yes": "Incluído",
+    "no": "Não incluído",
+    "scheduled": {
+      "monthly": "Mensal",
+      "weekly": "Semanal",
+      "daily": "Diário"
+    }
+  },
+  "toast": {
+    "saved": "Definições guardadas",
+    "snoozed": "Problema adiado",
+    "ignored": "Problema ignorado",
+    "intentional": "Marcado como intencional",
+    "resolved": "Marcado como resolvido",
+    "scanStarted": "Análise iniciada",
+    "ruleAdded": "Regra adicionada",
+    "ruleDeleted": "Regra eliminada",
+    "undone": "Anulado"
+  },
+  "csv": {
+    "export": "Exportar CSV",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "Não encontrado",
+    "forbidden": "Não tem acesso a isto",
+    "generic": "Ocorreu um erro. Tente novamente."
+  },
+  "activity": {
+    "title": "Atividade",
+    "empty": "Ainda não há atividade neste período.",
+    "filter": "Filtrar por tipo",
+    "all": "Toda a atividade",
+    "older": "Os eventos mais antigos continuam armazenados, mas ficam ocultos além da janela de histórico do seu plano.",
+    "upgrade": "Atualize o plano para ver mais histórico",
+    "markSeen": "Marcar tudo como visto",
+    "kind": {
+      "scan_completed": "Análise concluída: {opened, plural, =0 {nenhum problema novo} one {# problema novo} other {# problemas novos}}, {resolved, plural, =0 {nenhum resolvido} one {# resolvido} other {# resolvidos}}; pontuação de estado {score}",
+      "scan_failed": "Análise falhou: {code}",
+      "issues_changed": "Problemas alterados: {opened, plural, =0 {nenhum novo} one {# novo} other {# novos}}, {resolved, plural, =0 {nenhum resolvido} one {# resolvido} other {# resolvidos}}",
+      "group_regrew": "Um grupo de duplicados marcado como intencional cresceu: {count, plural, one {# novo membro} other {# novos membros}}",
+      "snoozes_reopened": "{count, plural, one {# problema adiado reaberto} other {# problemas adiados reabertos}}",
+      "autotag_changed": "{count, plural, one {# produto marcado} other {# produtos marcados}} com shelfcheck-fix",
+      "auto_tag_disabled": "A marcação automática foi desativada: a permissão write_products foi removida",
+      "plan_changed": "Plano alterado para {plan}",
+      "over_cap": "{count, plural, one {# variante estava} other {# variantes estavam}} além do seu plano e não foram analisadas"
+    },
+    "filterKind": {
+      "scan_completed": "Análises",
+      "scan_failed": "Falhas de análise",
+      "issues_changed": "Alterações de problemas",
+      "group_regrew": "Grupos de duplicados",
+      "snoozes_reopened": "Problemas reabertos",
+      "autotag_changed": "Marcação automática",
+      "auto_tag_disabled": "Marcação desativada",
+      "plan_changed": "Alterações de plano",
+      "over_cap": "Além do limite"
+    },
+    "pageStatus": "Página {page} de {pageCount}",
+    "previous": "Anterior",
+    "next": "Seguinte",
+    "window": "A apresentar os últimos {days} dias de atividade do seu plano.",
+    "olderHidden": "{count, plural, one {# evento mais antigo está} other {# eventos mais antigos estão}} armazenados, mas ocultos além da janela de histórico do seu plano."
+  }
+}

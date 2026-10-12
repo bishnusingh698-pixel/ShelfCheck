@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { healthScore, healthBand } from "../../app/issues/health-score.js";
 import { variantFingerprint } from "../../app/scan/fingerprint.js";
 import { csvCell, csvEscape, csvRow, neutralizeFormula, CSV_BOM } from "../../app/csv/escape.js";
-import { canScanNow, issueVisibilityLimit, variantCap, featureEnabled, isOverCap } from "../../app/billing/gating.js";
-import { planLimits } from "../../app/billing/plans.js";
+import { canScanNow, issueVisibilityLimit, variantCap, featureEnabled, isOverCap, activityHistoryDays, csvExportRows } from "../../app/billing/gating.js";
+import { PLANS, planLimits } from "../../app/billing/plans.js";
 
 describe("health score", () => {
   it("perfect score with no issues", () => {
@@ -121,14 +121,32 @@ describe("plan gating", () => {
     expect(issueVisibilityLimit("starter")).toBe(0);
     expect(featureEnabled("free", "watchers")).toBe(false);
     expect(featureEnabled("starter", "watchers")).toBe(true);
-    expect(featureEnabled("starter", "telegram")).toBe(false);
-    expect(featureEnabled("pro", "telegram")).toBe(true);
+    expect(featureEnabled("free", "weeklySummary")).toBe(false);
+    expect(featureEnabled("starter", "weeklySummary")).toBe(true);
+    expect(featureEnabled("pro", "weeklySummary")).toBe(true);
     expect(featureEnabled("pro", "autoTag")).toBe(true);
-    expect(featureEnabled("free", "digest")).toBe(false);
+    expect(featureEnabled("starter", "autoTag")).toBe(false);
+    expect(activityHistoryDays("free")).toBe(7);
+    expect(activityHistoryDays("starter")).toBe(30);
+    expect(activityHistoryDays("pro")).toBe(90);
+    expect(csvExportRows("free")).toBe(50);
+    expect(csvExportRows("starter")).toBe(0);
     expect(isOverCap("free", 501)).toBe(true);
     expect(isOverCap("free", 500)).toBe(false);
     expect(planLimits("starter").scheduled).toBe("weekly");
     expect(planLimits("pro").scheduled).toBe("daily");
     expect(planLimits("free").scheduled).toBe("monthly");
+  });
+  it("prices are USD and live only in plans.ts", () => {
+    expect(PLANS.free.priceUsd).toBe(0);
+    expect(PLANS.starter.priceUsd).toBe(4.99);
+    expect(PLANS.pro.priceUsd).toBe(9.99);
+    expect(PLANS.starter.trialDays).toBe(7);
+    expect(PLANS.pro.trialDays).toBe(7);
+    expect(PLANS.free.trialDays).toBeNull();
+  });
+  it("unknown plan maps to free", () => {
+    expect(planLimits("nonexistent").id).toBe("free");
+    expect(planLimits("starter").id).toBe("starter");
   });
 });

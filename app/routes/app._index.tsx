@@ -1,11 +1,11 @@
 import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from "react-router";
+import { useLoaderData, useSearchParams, useSubmit } from "react-router";
 import { db } from "../db.server.js";
 import { requireAdminShopContext } from "../lib/auth.server.js";
 import { canScanNow, variantCap } from "../billing/gating.js";
 import { planLimits } from "../billing/plans.js";
 import { localDayStart } from "../jobs/scheduler.server.js";
 import { useI18n } from "../i18n/i18n.context";
-import { useLoaderData } from "react-router";
 import { translateTemplate, type Messages } from "../i18n/translate.js";
 import { HealthScoreCard } from "../components/HealthScoreCard.js";
 import { IssueCountCards } from "../components/IssueCountCards.js";
@@ -14,6 +14,11 @@ import { PlanUsage } from "../components/PlanUsage.js";
 import { OverCapBanner } from "../components/OverCapBanner.js";
 import { TrendChart } from "../components/TrendChart.js";
 import { OnboardingChecklist } from "../components/OnboardingChecklist.js";
+import { SinceLastVisitCard } from "../components/SinceLastVisitCard.js";
+import { NeedsAttentionList } from "../components/NeedsAttentionList.js";
+import { WeeklySummaryCard } from "../components/WeeklySummaryCard.js";
+import { sinceLastVisit, needsAttention, weeklySummary } from "../activity/queries.server.js";
+import { featureEnabled } from "../billing/gating.js";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
 /**
@@ -90,6 +95,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
     .reverse();
 
+  // In-app activity (spec <in_app_alerts>): since-last-visit summary, the
+  // needs-attention list, and the Starter/Pro weekly summary card.
+  const [sinceVisit, attention] = await Promise.all([
+    sinceLastVisit(shop.id, shop.plan, shop.activitySeenAt),
+    needsAttention(shop.id, shop.activitySeenAt),
+  ]);
+  const weekly = featureEnabled(shop.plan, "weeklySummary")
+    ? await weeklySummary(shop.id, {
+        timeZone: shop.timezone ?? "UTC",
+        locale: shop.uiLocale ?? "en",
+      })
+    : null;
+
   return {
     scan: {
       status: (latestScan?.status ?? null) as ScanStatusValue | null,
@@ -120,6 +138,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       show: lastCompleted == null,
       scanRunning: activeScan != null,
     },
+    sinceVisit,
+    attention,
+    weekly,
+    shopHandle: shop.shopHandle,
     trend,
   };
 }
@@ -127,27 +149,60 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Index() {
   const { t } = useI18n();
   const data = useLoaderData<typeof loader>();
+  const submit = useSubmit();
+  const [searchParams] = useSearchParams();
+
+  const undoAt = searchParams.get("undo");
+  const markSeen = () => {
+    submit(
+      { intent: "activity_seen", redirectTo: "/app" },
+      { method: "post", action: "/app/activity" },
+    );
+  };
+  const undoMarkSeen = () => {
+    if (!undoAt) return;
+    submit(
+      { intent: "activity_seen_undo", previousSeenAt: undoAt, redirectTo: "/app" },
+      { method: "post", action: "/app/activity" },
+    );
+  };
 
   return (
     <s-page heading={t("dashboard.title")}>
       <OverCapBanner overCapCount={data.usage.overCapCount} />
+
+      {undoAt && (
+        <s-section>
+          <s-stack gap="base" direction="inline">
+            <s-paragraph>{t("dashboard.sinceLastVisit.seenToast")}</s-paragraph>
+            <s-button type="button" variant="secondary" onClick={undoMarkSeen}>
+              {t("dashboard.sinceLastVisit.undo")}
+            </s-button>
+          </s-stack>
+        </s-section>
+      )}
 
       {data.onboarding.show ? (
         <OnboardingChecklist
           steps={[
             { key: "scanRunning", state: data.onboarding.scanRunning ? "running" : "todo" },
             { key: "reviewIssues", state: "todo" },
-            { key: "setUpDigest", state: "todo" },
+            { key: "chooseChecks", state: "todo" },
           ]}
         />
       ) : (
-        <HealthScoreCard score={data.healthScore} />
+        <>
+          <SinceLastVisitCard summary={data.sinceVisit} onMarkSeen={markSeen} marking={false} />
+          <HealthScoreCard score={data.healthScore} />
+        </>
       )}
 
       <ScanStatus scan={data.scan} />
 
       {!data.onboarding.show && (
         <>
+          <NeedsAttentionList items={data.attention} shopHandle={data.shopHandle} />
+          {data.weekly && <WeeklySummaryCard summary={data.weekly} />}
           <IssueCountCards counts={data.counts} showByType={Object.keys(data.counts.byType).length > 0} />
           <PlanUsage analyzed={data.usage.analyzed} cap={data.usage.cap} />
           <TrendChart trend={data.trend} />

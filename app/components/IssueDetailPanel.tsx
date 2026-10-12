@@ -25,6 +25,8 @@ export interface DetailIssue {
   lastSeenScanId: string | null;
   intentionalMemberCount: number | null;
   details: Record<string, unknown>;
+  /** Spec <in_app_alerts>: "New" = open and first seen after the marker. */
+  isNew?: boolean;
 }
 
 export interface DetailMember {
@@ -80,6 +82,7 @@ export function IssueDetailPanel({ issue, members }: { issue: DetailIssue; membe
         <s-stack gap="base">
           <SeverityBadge severity={issue.severity} />
           <s-badge>{t(`issue.status.${issue.status}`)}</s-badge>
+          {issue.isNew && <s-badge tone="info">{t("issue.list.newBadge")}</s-badge>}
           <s-paragraph>
             {issueDetailText(t, { type: issue.type, details: issue.details })}
           </s-paragraph>

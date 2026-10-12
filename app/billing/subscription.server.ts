@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import { db } from "../db.server.js";
 import { adminGraphQL, unwrapData, type AdminGraphQLExecutor } from "../lib/admin-graphql.server.js";
 import type { PlanId } from "./plans.js";
+import { recordPlanChanged } from "../activity/events.server.js";
 
 /**
  * Managed Pricing read path (spec <plans_and_limits> + docs/api-notes.md §8):
@@ -94,6 +95,28 @@ export async function refreshShopPlan(
       planCheckedAt: now,
     },
   });
+  return plan;
+}
+
+/**
+ * Refresh the plan and record an activity event when it changed.
+ * Used by the app_subscriptions/update processor; a no-op refresh records
+ * nothing (spec <in_app_alerts>: redundant events are noise).
+ */
+export async function refreshShopPlanAndRecord(
+  shopId: string,
+  executor: AdminGraphQLExecutor,
+  client: PrismaClient = db,
+  now = new Date(),
+): Promise<PlanId> {
+  const before = await client.shop.findUnique({
+    where: { id: shopId },
+    select: { plan: true },
+  });
+  const plan = await refreshShopPlan(shopId, executor, client, now);
+  if (before && before.plan !== plan) {
+    await recordPlanChanged(shopId, plan, client, now);
+  }
   return plan;
 }
 

@@ -23,8 +23,87 @@ const REQUIRE_ALL = process.env.I18N_REQUIRE_ALL === "1";
 
 /** Locales where a string may legitimately equal the English source. */
 const SAME_AS_EN_ALLOWLIST: Record<string, string[]> = {
-  // Filled during Phase 12 with reviewed per-locale exceptions (brand terms,
-  // acronyms, established loanwords like "Dashboard" in German).
+  // Reviewed per-locale exceptions: brand terms, code values, plan names
+  // (must map exactly to the Partner Dashboard names), format templates,
+  // and established loanwords spelled identically in that language.
+  de: [
+    "app.documentTitle", // ShelfCheck — {title}
+    "issue.list.filterStatus", // "Status" is the German word too
+    "dashboard.usage.upgrade", // "Upgrade" is standard German usage
+    "dashboard.trend.scan", // "Scan {n}" is standard German usage
+    "plans.starter.name", // plan names map exactly (spec <billing>)
+    "plans.pro.name",
+    "csv.contentType", // MIME type, a code value
+    "activity.filterKind.scan_completed", // "Scans" is standard German usage
+  ],
+  fr: [
+    "app.documentTitle",
+    "issue.list.actions", // "Actions" is used in the Shopify admin (fr)
+    "dashboard.band.excellent", // "Excellent" is identical in French
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  es: [
+    "app.documentTitle",
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  "pt-BR": [
+    "app.documentTitle",
+    "issue.list.filterStatus", // "Status" is the Brazilian term too
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  "pt-PT": [
+    "app.documentTitle",
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  "zh-CN": [
+    "app.documentTitle", // ShelfCheck — {title}
+    "auth.shopDetails", // placeholder example domain, a code value
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  ja: [
+    "app.documentTitle",
+    "auth.shopDetails", // placeholder example domain, a code value
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  it: [
+    "app.documentTitle",
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
+  nl: [
+    "app.documentTitle",
+    "nav.dashboard", // Shopify admin (nl) uses "Dashboard"
+    "issue.status.open", // "Open" is the Dutch word too
+    "issue.list.filterStatus", // "Status" is the Dutch word too
+    "dashboard.trend.scan", // "Scan {n}" is standard Dutch usage
+    "rules.scope.variant", // "Variant" is the Dutch word too
+    "rules.scope.product", // "Product" is the Dutch word too
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+    "activity.filterKind.scan_completed", // "Scans" is standard Dutch usage
+  ],
+  sv: [
+    "app.documentTitle",
+    "issue.list.filterStatus", // "Status" is the Swedish word too
+    "rules.scope.variant", // "Variant" is the Swedish word too
+    "plans.starter.name",
+    "plans.pro.name",
+    "csv.contentType",
+  ],
 };
 
 const errors: string[] = [];

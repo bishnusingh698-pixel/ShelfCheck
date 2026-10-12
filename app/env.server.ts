@@ -20,28 +20,16 @@ const schema = z.object({
   DIRECT_URL: z.string().optional(),
 
   // --- Security keys ---
-  /** AES-256 key material for token/chat-id encryption. Hex or base64; >= 32 bytes. Format: `v1:<key>`. */
+  /** AES-256 key material for token encryption. Hex or base64; >= 32 bytes. Format: `v1:<key>`. */
   ENCRYPTION_KEY: z
     .string()
     .regex(/^v1:[A-Za-z0-9+/=_-]{43,}$/, "ENCRYPTION_KEY must look like v1:<43+ chars of key material>"),
-  /** Dedicated HMAC key for signed tokens (unsubscribe, telegram link). Same format. */
+  /** Dedicated HMAC key for signed tokens. Same format. */
   SIGNING_KEY: z
     .string()
     .regex(/^v1:[A-Za-z0-9+/=_-]{43,}$/, "SIGNING_KEY must look like v1:<43+ chars of key material>"),
   /** Shared secret required by POST /jobs/tick. */
   TICK_SECRET: z.string().min(16).default("dev-only-tick-secret-not-for-production"),
-
-  // --- Resend (digest email) ---
-  RESEND_API_KEY: z.string().optional(),
-  RESEND_WEBHOOK_SECRET: z.string().optional(),
-  RESEND_FROM: z.string().default("ShelfCheck <digest@example.invalid>"),
-  RESEND_DAILY_LIMIT: z.coerce.number().int().positive().default(100),
-  RESEND_MONTHLY_LIMIT: z.coerce.number().int().positive().default(3000),
-
-  // --- Telegram (Pro alerts) ---
-  TELEGRAM_BOT_TOKEN: z.string().optional(),
-  TELEGRAM_BOT_USERNAME: z.string().optional(),
-  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
 
   // --- App identity ---
   APP_URL: z.string().default("http://localhost:3000"),

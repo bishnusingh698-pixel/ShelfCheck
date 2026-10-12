@@ -72,7 +72,7 @@ test("onboarding checklist shows for a fresh install — never a blank screen", 
   // The install scan is queued, so the first step shows live progress.
   await expect(page.getByText("First scan running")).toBeVisible();
   await expect(page.getByText("Review your issues")).toBeVisible();
-  await expect(page.getByText("Set up the weekly digest")).toBeVisible();
+  await expect(page.getByText("Choose which checks to run")).toBeVisible();
   // No health score yet: no completed scan.
   await expect(page.getByText("Health score")).not.toBeVisible();
 });

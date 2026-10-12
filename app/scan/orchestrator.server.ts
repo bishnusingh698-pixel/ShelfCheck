@@ -26,6 +26,7 @@ import { healthScore } from "../issues/health-score.js";
 import { reconcileAfterScan } from "./reconcile.server.js";
 import { enqueue } from "../jobs/queue.server.js";
 import { tryLockShop } from "../lib/advisory-lock.server.js";
+import { recordActivityEvent } from "../activity/events.server.js";
 
 /**
  * Scan state machine: trigger → lock → start bulk op → await (webhook first,
@@ -162,7 +163,7 @@ export async function parseAndDetect(params: {
     variantCap: cap,
   });
 
-  await runDetection({ shopId, scanId, settings, client, logger, streamResult });
+  await runDetection({ shopId, scanId, settings, plan, client, logger, streamResult });
 }
 
 /** Detection phase: duplicates in SQL, row rules in code, lifecycle upserts. */
@@ -170,6 +171,7 @@ export async function runDetection(params: {
   shopId: string;
   scanId: string;
   settings: Record<string, unknown>;
+  plan?: string;
   client: PrismaClient;
   logger: Logger;
   streamResult: { variantsSeen: number; overCapCount: number };
@@ -266,6 +268,35 @@ export async function runDetection(params: {
     "scan completed",
   );
 
+  // In-app activity events (spec <in_app_alerts>). Failure to record an
+  // event must never fail the scan; counts and codes only.
+  try {
+    await recordActivityEvent({
+      shopId,
+      kind: "scan_completed",
+      payload: {
+        opened,
+        resolved,
+        regrown,
+        score,
+        variantsAnalyzed: streamResult.variantsSeen,
+      },
+      client,
+      now,
+    });
+    if (streamResult.overCapCount > 0) {
+      await recordActivityEvent({
+        shopId,
+        kind: "over_cap",
+        payload: { count: streamResult.overCapCount, cap: variantCap(params.plan ?? "free") },
+        client,
+        now,
+      });
+    }
+  } catch (err) {
+    logger.warn({ err, shopId, scanId }, "activity event recording failed");
+  }
+
   // Auto-tag runs after a completed scan only (never from webhook-driven
   // work): the fingerprint check in product-sync is the loop guard (D-31).
   if (params.settings.autoTag === true) {
@@ -275,19 +306,6 @@ export async function runDetection(params: {
         payload: { shopId, scanId },
         shopId,
         dedupeKey: `autotag:${shopId}:${scanId}`,
-      },
-      client,
-    );
-  }
-
-  // Enqueue notifications for newly opened issues (digest/alert jobs check plan).
-  if (opened > 0) {
-    await enqueue(
-      {
-        kind: "notify_new_issues",
-        payload: { scanId, openedCount: opened },
-        shopId,
-        dedupeKey: `notify:${scanId}`,
       },
       client,
     );
@@ -331,10 +349,23 @@ export async function failScan(
   errorCode: string,
   client: PrismaClient,
 ): Promise<void> {
-  await client.scan.updateMany({
+  const updated = await client.scan.updateMany({
     where: { id: scanId, shopId, status: { in: ["queued", "running", "parsing"] } },
     data: { status: "failed", errorCode, finishedAt: new Date() },
   });
+  if (updated.count > 0) {
+    // The terminal failure event (retries that requeue are not failures yet).
+    try {
+      await recordActivityEvent({
+        shopId,
+        kind: "scan_failed",
+        payload: { code: errorCode },
+        client,
+      });
+    } catch {
+      // Activity events must never break the failure path either.
+    }
+  }
 }
 
 /** Trigger: create a scan under the shop lock; returns existing if active. */

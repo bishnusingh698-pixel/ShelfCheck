@@ -32,6 +32,11 @@ export const ISSUE_LIST_FILTER_SCHEMA = z.object({
   q: z.string().trim().max(255).optional(),
   sort: z.enum(["severity", "firstSeen"]).default("severity"),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
+  /** Spec <in_app_alerts>: "New only" shows open issues first seen after activity_seen_at. */
+  newOnly: z
+    .string()
+    .optional()
+    .transform((v) => v === "1" || v === "true" || v === "on"),
 });
 
 export type IssueListFilters = z.infer<typeof ISSUE_LIST_FILTER_SCHEMA>;
@@ -46,6 +51,7 @@ export function parseIssueFilters(url: URL): IssueListFilters {
     q: url.searchParams.get("q") ?? undefined,
     sort: url.searchParams.get("sort") ?? undefined,
     page: url.searchParams.get("page") ?? undefined,
+    newOnly: url.searchParams.get("newOnly") ?? undefined,
   };
   const cleaned = Object.fromEntries(Object.entries(raw).filter(([, v]) => v !== undefined));
   const parsed = ISSUE_LIST_FILTER_SCHEMA.safeParse(cleaned);
@@ -91,6 +97,8 @@ interface IssueListInput {
   plan: string;
   filters: IssueListFilters;
   pageSize?: number;
+  /** The shop's "last visit" marker, for the "New" badge and the New-only filter. */
+  activitySeenAt?: Date | null;
 }
 
 /**
@@ -109,6 +117,15 @@ export async function queryIssueList(client: PrismaClient, input: IssueListInput
   ];
   if (filters.type) conditions.push(Prisma.sql`i."type" = ${filters.type}`);
   if (filters.severity) conditions.push(Prisma.sql`i."severity" = ${filters.severity}`);
+  // Spec <in_app_alerts>: "New" = open and first seen after the last-visit
+  // marker; "New only" filters the list to those rows.
+  if (filters.newOnly) {
+    conditions.push(
+      input.activitySeenAt
+        ? Prisma.sql`i."firstSeenAt" > ${input.activitySeenAt}`
+        : Prisma.sql`TRUE`,
+    );
+  }
   if (filters.vendor) {
     conditions.push(
       Prisma.sql`COALESCE(v."vendor", i."details"->>'vendor') = ${filters.vendor}`,
@@ -201,12 +218,8 @@ export async function queryIssueList(client: PrismaClient, input: IssueListInput
     : [];
   const rawById = new Map(rawRows.map((r) => [r.id, r]));
   const variantByGid = new Map(variants.map((v) => [v.variantGid, v]));
-  const latestScan = await client.scan.findFirst({
-    where: { shopId, status: "completed" },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
 
+  const seenMarker = input.activitySeenAt ?? null;
   const rows: IssueListRow[] = groups.map((g) => {
     const raw = rawById.get(g.id);
     const variant = variantByGid.get(g.variantGid);
@@ -229,7 +242,8 @@ export async function queryIssueList(client: PrismaClient, input: IssueListInput
       barcode: variant?.barcode ?? str(details.barcode),
       details,
       memberCount: g.memberCount,
-      isNew: raw != null && raw.firstSeenScanId != null && raw.firstSeenScanId === latestScan?.id,
+      // Spec <in_app_alerts>: "New" = open and first seen after the marker.
+      isNew: raw != null && raw.status === "open" && seenMarker != null && raw.firstSeenAt > seenMarker,
     };
   });
 

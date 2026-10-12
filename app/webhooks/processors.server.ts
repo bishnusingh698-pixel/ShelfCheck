@@ -3,12 +3,13 @@ import { logger } from "../lib/logger.server.js";
 import { registerWebhookProcessor, type StoredWebhookEvent } from "./intake.server.js";
 import { uninstallShop } from "./uninstall.server.js";
 import { acknowledgeCustomerTopic, redactShop } from "./redact.server.js";
-import { refreshShopPlan } from "../billing/subscription.server.js";
+import { refreshShopPlanAndRecord } from "../billing/subscription.server.js";
 import { makeJobExecutor } from "../jobs/executor.server.js";
 import { parseAndDetect, handleFailedOperation } from "../scan/orchestrator.server.js";
 import { readBulkOperation } from "../scan/bulk-operation.server.js";
 import { syncProduct, removeProductVariants, PRODUCT_DEBOUNCE_MS } from "./product-sync.server.js";
 import { syncInventoryItem, INVENTORY_COALESCE_MS } from "./inventory-sync.server.js";
+import { recordIssuesChanged, recordActivityEvent } from "../activity/events.server.js";
 import { enqueue, isUniqueViolation } from "../jobs/queue.server.js";
 
 /**
@@ -28,17 +29,26 @@ export async function handleScopesUpdate(event: StoredWebhookEvent, client: Pris
 
   const settings = (shop.settings ?? {}) as Record<string, unknown>;
   const hasWriteProducts = scopes.includes("write_products");
-  const nextSettings =
-    !hasWriteProducts && settings.autoTag === true
-      ? { ...settings, autoTag: false }
-      : settings;
+  const disabling = !hasWriteProducts && settings.autoTag === true;
+  const nextSettings = disabling ? { ...settings, autoTag: false } : settings;
 
   await client.shop.update({
     where: { id: shop.id },
     data: { scopes: scopes.join(","), settings: nextSettings as never },
   });
-  if (!hasWriteProducts && settings.autoTag === true) {
+  if (disabling) {
     logger.info({ shopId: shop.id }, "auto-tag disabled: write_products scope removed");
+    try {
+      // Spec <webhooks> app/scopes_update: record the activity event.
+      await recordActivityEvent({
+        shopId: shop.id,
+        kind: "auto_tag_disabled",
+        payload: { reason: "scope_removed" },
+        client,
+      });
+    } catch {
+      // The settings update already succeeded; never fail the processor.
+    }
   }
 }
 
@@ -48,7 +58,7 @@ export async function handleSubscriptionUpdate(event: StoredWebhookEvent, client
   // The live read is authoritative; the payload's status can lag (PENDING).
   try {
     const executor = await makeJobExecutor(shop.id, client);
-    await refreshShopPlan(shop.id, executor, client);
+    await refreshShopPlanAndRecord(shop.id, executor, client);
     logger.info({ shopId: shop.id }, "plan refreshed from app_subscriptions/update");
   } catch (error) {
     // Uninstalled shops (or expired tokens) cannot refresh; keep the cached
@@ -124,7 +134,14 @@ export async function handleProductTopic(event: StoredWebhookEvent, client: Pris
 
   if (isDelete) {
     // Deletion needs no Shopify read-back: drop the rows and resolve issues.
-    await removeProductVariants({ shopId: shop.id, productGid, client });
+    const result = await removeProductVariants({ shopId: shop.id, productGid, client });
+    if (result.resolved > 0) {
+      try {
+        await recordIssuesChanged(shop.id, { resolved: result.resolved }, client);
+      } catch {
+        // Never fail the deletion path over an activity event.
+      }
+    }
     return;
   }
   await enqueueDebouncedProductSync(shop.id, productGid, client, new Date());
@@ -192,7 +209,8 @@ export async function handleInventoryLevelUpdate(
 
 /**
  * Run one debounced product sync (the product_sync job handler calls this).
- * The executor is injected so tests can stub Shopify.
+ * The executor is injected so tests can stub Shopify. Issue changes are
+ * recorded as a coalesced in-app activity event (spec <in_app_alerts>).
  */
 export async function runProductSync(
   shopId: string,
@@ -200,7 +218,14 @@ export async function runProductSync(
   client: PrismaClient,
 ): Promise<void> {
   const executor = await makeJobExecutor(shopId, client);
-  await syncProduct({ shopId, productGid, executor, client });
+  const result = await syncProduct({ shopId, productGid, executor, client });
+  if (result.opened > 0 || result.resolved > 0) {
+    try {
+      await recordIssuesChanged(shopId, { opened: result.opened, resolved: result.resolved }, client);
+    } catch {
+      // Never fail the sync over an activity event.
+    }
+  }
 }
 
 /** Run one coalesced inventory sync (the inventory_sync job handler). */
@@ -210,7 +235,14 @@ export async function runInventorySync(
   available: number | null,
   client: PrismaClient,
 ): Promise<void> {
-  await syncInventoryItem({ shopId, inventoryItemId, available, client });
+  const result = await syncInventoryItem({ shopId, inventoryItemId, available, client });
+  if (result.opened > 0 || result.resolved > 0) {
+    try {
+      await recordIssuesChanged(shopId, { opened: result.opened, resolved: result.resolved }, client);
+    } catch {
+      // Never fail the sync over an activity event.
+    }
+  }
 }
 
 /** Install every lifecycle + watcher processor. Called by the production handler map. */

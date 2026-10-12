@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Vind en los catalogusproblemen op voordat een verzending vastloopt.",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "Inloggen",
+    "button": "Inloggen",
+    "shopLabel": "Shopdomein",
+    "shopDetails": "voorbeeld.myshopify.com",
+    "error": {
+      "missingShop": "Voer je shopdomein in om in te loggen",
+      "invalidShop": "Voer een geldig shopdomein in om in te loggen"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "issues": "Problemen",
+    "rules": "Regels",
+    "settings": "Instellingen",
+    "plans": "Abonnementen",
+    "activity": "Activiteit",
+    "activityBadge": "Nieuw"
+  },
+  "common": {
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "retry": "Opnieuw proberen",
+    "undo": "Ongedaan maken",
+    "close": "Sluiten",
+    "copySku": "SKU kopiëren",
+    "copied": "Gekopieerd naar het klembord",
+    "openInAdmin": "Openen in het Shopify-beheer",
+    "loading": "Laden…",
+    "errorTitle": "Er ging iets mis",
+    "errorBody": "De laatste actie kon niet worden voltooid. Je kunt het opnieuw proberen.",
+    "empty": "Nog niets hier"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "Ontbrekende SKU",
+      "DUPLICATE_SKU": "Dubbele SKU",
+      "MISSING_BARCODE": "Ontbrekende barcode",
+      "DUPLICATE_BARCODE": "Dubbele barcode",
+      "INVALID_BARCODE": "Ongeldige barcode",
+      "PUBLISHED_ZERO_INVENTORY": "Gepubliceerd zonder voorraad",
+      "VARIANT_MISSING_IMAGE": "Afbeelding van variant ontbreekt",
+      "MISSING_WEIGHT": "Ontbrekend gewicht",
+      "MISSING_COST": "Ontbrekende kosten",
+      "COMPARE_AT_INVALID": "Ongeldig vergelijkingsprijs",
+      "ZERO_PRICE": "Prijs van nul"
+    },
+    "severity": {
+      "high": "Hoog",
+      "medium": "Gemiddeld",
+      "low": "Laag"
+    },
+    "status": {
+      "open": "Open",
+      "snoozed": "Uitgesteld",
+      "ignored": "Genegeerd",
+      "intentional": "Opzettelijk",
+      "resolved": "Opgelost"
+    },
+    "hint": {
+      "scientific_notation": "Lijkt op wetenschappelijke notatie (een CSV-export kan deze barcode hebben beschadigd)",
+      "likely_dropped_leading_zero": "Een waarde van 11 cijfers; er is mogelijk een voorloopnul verloren gegaan",
+      "inner_whitespace": "Bevat spaties binnen de waarde"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "De vergelijkingsprijs is lager dan de prijs",
+      "COMPARE_AT_INVALID_equal": "De vergelijkingsprijs is gelijk aan de prijs",
+      "case_or_space_only": "Deze SKU's verschillen alleen in hoofdletters of spaties",
+      "group_grew": "Er is een nieuwe variant bij deze groep gekomen"
+    },
+    "actions": {
+      "snooze": "Uitstellen",
+      "ignore": "Negeren",
+      "intentional": "Markeren als opzettelijk",
+      "resolve": "Markeren als opgelost",
+      "unsnooze": "Herstellen"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 dagen} =30 {30 dagen} =90 {90 dagen} other {{count} dagen}}",
+      "banner": "Uitgesteld tot {date}. Wordt automatisch hersteld."
+    },
+    "list": {
+      "title": "Problemen",
+      "empty": "Geen enkele probleem voldoet aan de huidige filters. Je catalogus ziet er goed uit.",
+      "filterType": "Probleemtype",
+      "filterSeverity": "Ernst",
+      "filterStatus": "Status",
+      "filterVendor": "Leverancier",
+      "search": "Zoeken op SKU of producttitel",
+      "sortBy": "Sorteren op",
+      "sortSeverity": "Ernst",
+      "sortFirstSeen": "Eerst gezien",
+      "bulkSnooze": "Selectie uitstellen",
+      "bulkIgnore": "Selectie negeren",
+      "bulkIntentional": "Selectie markeren als opzettelijk",
+      "selected": "{count, plural, =0 {Geen problemen geselecteerd} one {# probleem geselecteerd} other {# problemen geselecteerd}}",
+      "newBadge": "Nieuw",
+      "groupMembers": "Alle leden van deze groep",
+      "overCapHidden": "{count, plural, one {# probleem ligt boven de weergavelimiet van je abonnement} other {# problemen liggen boven de weergavelimiet van je abonnement}}",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "pageStatus": "Pagina {page} van {pageCount} ({total} problemen)",
+      "actions": "Acties",
+      "newOnlyFilter": "Alleen nieuwe"
+    }
+  },
+  "dashboard": {
+    "title": "Catalogusgezondheid",
+    "healthScore": "Gezondheidsscore",
+    "band": {
+      "excellent": "Uitstekend",
+      "good": "Goed",
+      "needs_attention": "Vereist aandacht",
+      "critical": "Kritiek"
+    },
+    "counts": {
+      "title": "Problemen per ernst",
+      "high": "{count, plural, one {# probleem met hoge ernst} other {# problemen met hoge ernst}}",
+      "medium": "{count, plural, one {# probleem met gemiddelde ernst} other {# problemen met gemiddelde ernst}}",
+      "low": "{count, plural, one {# probleem met lage ernst} other {# problemen met lage ernst}}",
+      "byType": "Problemen per type"
+    },
+    "scan": {
+      "title": "Laatste scan",
+      "status": {
+        "queued": "In de wachtrij",
+        "running": "Scannen…",
+        "parsing": "Resultaten lezen…",
+        "completed": "Voltooid",
+        "failed": "Mislukt",
+        "canceled": "Geannuleerd"
+      },
+      "runNow": "Nu scannen",
+      "lastScanAt": "Laatst gescannt {time}",
+      "never": "Nooit gescannt",
+      "cooldown": "Je kunt over {minutes} minuten opnieuw scannen",
+      "failedBody": "De laatste scan kon niet worden voltooid. Je kunt het opnieuw proberen.",
+      "variants": "{count, plural, one {# variant geanalyseerd} other {# varianten geanalyseerd}}"
+    },
+    "usage": {
+      "title": "Abonnementsgebruik",
+      "variants": "{analyzed} van {cap} varianten geanalyseerd",
+      "overCap": "{count, plural, one {# variant viel buiten je abonnement en is niet geanalyseerd} other {# varianten vielen buiten je abonnement en zijn niet geanalyseerd}}",
+      "overCapNote": "Duplicaten met deze varianten zijn mogelijk gemist.",
+      "upgrade": "Upgraden"
+    },
+    "trend": {
+      "title": "Nieuw vs. opgelost",
+      "last8": "Laatste 8 scans",
+      "new": "Nieuw",
+      "resolved": "Opgelost",
+      "scan": "Scan {n}"
+    },
+    "onboarding": {
+      "title": "ShelfCheck instellen",
+      "scanRunning": "Eerste scan loopt",
+      "reviewIssues": "Bekijk je problemen",
+      "done": "Klaar",
+      "chooseChecks": "Kies welke controles worden uitgevoerd"
+    },
+    "sinceLastVisit": {
+      "title": "Sinds je laatste bezoek",
+      "newIssues": "{count, plural, =0 {Geen nieuwe problemen} one {# nieuw probleem} other {# nieuwe problemen}} sinds je laatste bezoek ({high, plural, =0 {geen met hoge ernst} one {# met hoge ernst} other {# met hoge ernst}})",
+      "resolvedIssues": "{count, plural, =0 {Geen problemen opgelost} one {# probleem opgelost} other {# problemen opgelost}} sinds je laatste bezoek",
+      "scansFinished": "{count, plural, one {# scan voltooid} other {# scans voltooid}} sinds je laatste bezoek",
+      "scansFailed": "{count, plural, one {# scan mislukt} other {# scans mislukt}} sinds je laatste bezoek",
+      "scoreChange": "De gezondheidsscore is sinds je laatste bezoek met {delta} veranderd",
+      "markSeen": "Alles markeren als bekeken",
+      "nothingNew": "Niets nieuws sinds je laatste bezoek",
+      "seenToast": "Activiteit gemarkeerd als bekeken.",
+      "undo": "Ongedaan maken"
+    },
+    "needsAttention": {
+      "title": "Vereist aandacht",
+      "view": "Bekijken",
+      "openInAdmin": "Openen in het Shopify-beheer"
+    },
+    "weeklySummary": {
+      "title": "Deze week",
+      "newIssues": "{count, plural, =0 {Geen nieuwe problemen} one {# nieuw probleem} other {# nieuwe problemen}} deze week (vorige week: {last})",
+      "resolvedIssues": "{count, plural, =0 {Geen problemen opgelost} one {# probleem opgelost} other {# problemen opgelost}} deze week (vorige week: {last})",
+      "scoreChange": "Gezondheidsscore sinds vorige week {direction} {delta}",
+      "improved": "gestegen met",
+      "declined": "gedaald met"
+    }
+  },
+  "scan": {
+    "started": "Scan gestart. Dit duurt meestal enkele minuten.",
+    "denied": {
+      "free": "Je abonnement omvat één scan per maand. Upgrade om vaker te scannen.",
+      "dailyLimit": "Je hebt de dagelijkse scanlimiet van je abonnement bereikt.",
+      "cooldown": "Er is zojuist een scan uitgevoerd. Wacht even voordat je een nieuwe start.",
+      "active": "Er loopt al een scan."
+    }
+  },
+  "settings": {
+    "title": "Instellingen",
+    "issueTypes": "Probleemtypen",
+    "issueTypesHelp": "Zet elke controle uit die je niet wilt zien.",
+    "catalog": {
+      "title": "Catalogusbereik",
+      "includeDraft": "Concepten opnemen",
+      "includeArchived": "Gearchiveerde producten opnemen",
+      "acceptNonGtin": "Niet-GS1-barcodes accepteren",
+      "acceptNonGtinHelp": "Wanneer ingeschakeld, worden alleen barcodes met GS1-lengte gecontroleerd op het controlecijfer."
+    },
+    "autoTag": {
+      "title": "Automatisch taggen",
+      "enable": "Producten met problemen taggen",
+      "help": "Voegt de tag \"shelfcheck-fix\" toe aan producten met openstaande problemen. Vereist de rechten write_products, die je hier kunt verlenen.",
+      "requestScope": "Rechten verlenen",
+      "granted": "Rechten verleend",
+      "denied": "Automatisch taggen heeft de rechten write_products nodig."
+    },
+    "language": {
+      "title": "Taal",
+      "interface": "Interfacetaal"
+    }
+  },
+  "rules": {
+    "title": "Negeerregels",
+    "empty": "Nog geen negeerregels. Regels houden overeenkomende problemen uit je lijst.",
+    "scope": {
+      "sku": "SKU",
+      "variant": "Variant",
+      "product": "Product",
+      "vendor": "Leverancier"
+    },
+    "value": "Waarde",
+    "issueType": "Probleemtype (optioneel)",
+    "issueTypeAny": "Elk type",
+    "note": "Notitie (optioneel)",
+    "add": "Regel toevoegen",
+    "delete": "Verwijderen",
+    "scopeLabel": "Regelbereik"
+  },
+  "plans": {
+    "title": "Abonnementen",
+    "free": "Gratis",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Abonnementen vergelijken",
+    "current": "Huidig abonnement",
+    "upgrade": "Bekijk abonnementen en upgrade",
+    "openManagedPricing": "Abonnement beheren in Shopify",
+    "locked": {
+      "watchers": "Webhook-watchers zijn beschikbaar in Starter en Pro.",
+      "autoTag": "Automatisch taggen is beschikbaar in Pro.",
+      "weeklySummary": "De week samenvatting is beschikbaar in Starter en Pro.",
+      "activityHistory": "Een langere activiteitengeschiedenis is beschikbaar in betaalde abonnementen."
+    },
+    "feature": {
+      "scans": "Geplande scans",
+      "manualScans": "Handmatige scans per dag",
+      "issuesShown": "Weergegeven problemen",
+      "variantCap": "Geanalyseerde varianten",
+      "watchers": "Webhook-watchers",
+      "csv": "CSV-export",
+      "autoTag": "Automatisch taggen",
+      "price": "Prijs",
+      "weeklySummary": "Weeksamenvatting",
+      "activityHistory": "Activiteitengeschiedenis (dagen)"
+    },
+    "unlimited": "Onbeperkt",
+    "yes": "Inbegrepen",
+    "no": "Niet inbegrepen",
+    "scheduled": {
+      "monthly": "Maandelijks",
+      "weekly": "Wekelijks",
+      "daily": "Dagelijks"
+    }
+  },
+  "toast": {
+    "saved": "Instellingen opgeslagen",
+    "snoozed": "Probleem uitgesteld",
+    "ignored": "Probleem genegeerd",
+    "intentional": "Gemarkeerd als opzettelijk",
+    "resolved": "Gemarkeerd als opgelost",
+    "scanStarted": "Scan gestart",
+    "ruleAdded": "Regel toegevoegd",
+    "ruleDeleted": "Regel verwijderd",
+    "undone": "Ongedaan gemaakt"
+  },
+  "csv": {
+    "export": "CSV exporteren",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "Niet gevonden",
+    "forbidden": "Je hebt geen toegang tot dit item",
+    "generic": "Er ging iets mis. Probeer het opnieuw."
+  },
+  "activity": {
+    "title": "Activiteit",
+    "empty": "Nog geen activiteit in deze periode.",
+    "filter": "Filteren op soort",
+    "all": "Alle activiteit",
+    "older": "Oudere gebeurtenissen blijven opgeslagen, maar zijn verborgen buiten het geschiedenisvenster van je abonnement.",
+    "upgrade": "Upgrade voor meer geschiedenis",
+    "markSeen": "Alles markeren als bekeken",
+    "kind": {
+      "scan_completed": "Scan voltooid: {opened, plural, =0 {geen nieuwe problemen} one {# nieuw probleem} other {# nieuwe problemen}}, {resolved, plural, =0 {geen opgelost} one {# opgelost} other {# opgelost}}; gezondheidsscore {score}",
+      "scan_failed": "Scan mislukt: {code}",
+      "issues_changed": "Problemen gewijzigd: {opened, plural, =0 {geen nieuwe} one {# nieuw} other {# nieuwe}}, {resolved, plural, =0 {geen opgelost} one {# opgelost} other {# opgelost}}",
+      "group_regrew": "Een als opzettelijk gemarkeerde duplicaatsgroep is gegroeid: {count, plural, one {# nieuw lid} other {# nieuwe leden}}",
+      "snoozes_reopened": "{count, plural, one {# uitgesteld probleem hersteld} other {# uitgestelde problemen hersteld}}",
+      "autotag_changed": "{count, plural, one {# product getagd} other {# producten getagd}} met shelfcheck-fix",
+      "auto_tag_disabled": "Automatisch taggen is uitgeschakeld: de rechten write_products zijn ingetrokken",
+      "plan_changed": "Abonnement gewijzigd naar {plan}",
+      "over_cap": "{count, plural, one {# variant viel} other {# varianten vielen}} buiten je abonnement en zijn niet geanalyseerd"
+    },
+    "filterKind": {
+      "scan_completed": "Scans",
+      "scan_failed": "Mislukte scans",
+      "issues_changed": "Probleemwijzigingen",
+      "group_regrew": "Duplicaatsgroepen",
+      "snoozes_reopened": "Herstelde problemen",
+      "autotag_changed": "Automatisch taggen",
+      "auto_tag_disabled": "Taggen uitgeschakeld",
+      "plan_changed": "Abonnementswijzigingen",
+      "over_cap": "Buiten abonnement"
+    },
+    "pageStatus": "Pagina {page} van {pageCount}",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "window": "De laatste {days} dagen activiteit voor je abonnement worden weergegeven.",
+    "olderHidden": "{count, plural, one {# oudere gebeurtenis is} other {# oudere gebeurtenissen zijn}} opgeslagen, maar verborgen buiten het geschiedenisvenster van je abonnement."
+  }
+}

@@ -5,6 +5,7 @@ import { adminGraphQL, unwrapData } from "../lib/admin-graphql.server.js";
 import type { AdminGraphQLExecutor } from "../lib/admin-graphql.server.js";
 import { featureEnabled } from "../billing/gating.js";
 import { logger } from "../lib/logger.server.js";
+import { recordActivityEvent } from "../activity/events.server.js";
 
 /**
  * Auto-tag: the ONLY write ShelfCheck can make to Shopify — adding or
@@ -205,5 +206,20 @@ export async function applyAutoTags(
     return { ...outcome, skipped: "nothing-to-tag" };
   }
   log.info({ shopId, ...outcome }, "auto-tag run complete");
+
+  // In-app activity (spec <in_app_alerts>): counts only, and only when the
+  // run actually changed tags (a no-op run records nothing).
+  if (outcome.tagged + outcome.untagged > 0) {
+    try {
+      await recordActivityEvent({
+        shopId,
+        kind: "autotag_changed",
+        payload: { tagged: outcome.tagged, untagged: outcome.untagged, errors: outcome.errors },
+        client,
+      });
+    } catch (err) {
+      log.warn({ err, shopId }, "autotag activity event recording failed");
+    }
+  }
   return outcome;
 }

@@ -11,6 +11,7 @@ import { getMessages } from "../i18n/i18n.server.js";
 import { PSEUDO_LOCALE } from "../i18n/config.js";
 import { resolveLocale } from "../i18n/resolve-locale.js";
 import { I18nProvider, useI18n } from "../i18n/i18n.context";
+import { hasUnseenActivity } from "../activity/queries.server.js";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticateAdmin(request);
@@ -28,6 +29,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ? PSEUDO_LOCALE
       : resolveLocale(shop.uiLocale ?? urlLocale);
 
+  const unseen = await hasUnseenActivity(shop.id, shop.activitySeenAt);
+
   return {
     apiKey: getEnv().SHOPIFY_API_KEY || "",
     locale,
@@ -35,11 +38,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // App Bridge cannot run outside the Shopify admin iframe; the test-only
     // UI harness renders the same screens without it.
     harness: uiHarnessActive(),
+    unseenActivity: unseen,
   };
 }
 
 function AppNav() {
   const { t } = useI18n();
+  const { unseenActivity } = useLoaderData<typeof loader>();
   return (
     <s-app-nav>
       <s-link href="/app">{t("nav.dashboard")}</s-link>
@@ -47,6 +52,12 @@ function AppNav() {
       <s-link href="/app/rules">{t("nav.rules")}</s-link>
       <s-link href="/app/settings">{t("nav.settings")}</s-link>
       <s-link href="/app/plans">{t("nav.plans")}</s-link>
+      <s-link href="/app/activity">{t("nav.activity")}</s-link>
+      {unseenActivity && (
+        <s-badge tone="info">
+          {t("nav.activityBadge")}
+        </s-badge>
+      )}
     </s-app-nav>
   );
 }

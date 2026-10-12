@@ -22,8 +22,6 @@ const redactPaths = [
   "headers.Authorization",
   "headers['x-shopify-hmac-sha256']",
   "headers['X-Shopify-Hmac-Sha256']",
-  "headers['x-telegram-bot-api-secret-token']",
-  "headers['svix-signature']",
   "*.accessToken",
   "*.refreshToken",
   "*.secret",
@@ -32,7 +30,6 @@ const redactPaths = [
   "*.email",
   "*.payload",
   "session.accessToken",
-  "settings.*.chat_id_enc",
 ];
 
 export const logger = pino({

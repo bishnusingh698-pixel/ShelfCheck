@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 
+import { recordActivityEvent } from "../activity/events.server.js";
 import { snoozeUntil, type SnoozeDays } from "./snooze.js";
 
 export { SNOOZE_DAYS, isSnoozeDays, snoozeUntil } from "./snooze.js";
@@ -8,6 +9,7 @@ export type { SnoozeDays } from "./snooze.js";
 /**
  * Snooze lifecycle: snooze (7/30/90 days), unsnooze, reopen expired.
  * Expired snoozes reopen automatically on each tick (no per-row timers).
+ * Each reopen batch records one in-app activity event per shop.
  */
 
 export async function snoozeIssue(
@@ -32,9 +34,35 @@ export async function unsnoozeIssue(shopId: string, issueId: string, client: Pri
 
 /** Reopen all snoozes that expired. Idempotent: only touches rows past their deadline. */
 export async function reopenExpiredSnoozes(now: Date, client: PrismaClient): Promise<number> {
+  // Read affected shops first: updateMany cannot return grouping.
+  const expired = await client.issue.findMany({
+    where: { status: "snoozed", snoozedUntil: { lt: now } },
+    select: { shopId: true },
+  });
+  if (expired.length === 0) return 0;
+
+  const byShop = new Map<string, number>();
+  for (const row of expired) {
+    byShop.set(row.shopId, (byShop.get(row.shopId) ?? 0) + 1);
+  }
+
   const result = await client.issue.updateMany({
     where: { status: "snoozed", snoozedUntil: { lt: now } },
     data: { status: "open", snoozedUntil: null },
   });
+
+  for (const [shopId, count] of byShop) {
+    try {
+      await recordActivityEvent({
+        shopId,
+        kind: "snoozes_reopened",
+        payload: { count },
+        client,
+        now,
+      });
+    } catch {
+      // An activity event must never fail the reopen itself.
+    }
+  }
   return result.count;
 }

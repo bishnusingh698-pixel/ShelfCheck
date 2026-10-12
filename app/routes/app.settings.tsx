@@ -13,16 +13,15 @@ import { translateTemplate, type Messages } from "../i18n/translate.js";
 import { useI18n } from "../i18n/i18n.context";
 import { resolveLocale } from "../i18n/resolve-locale.js";
 import { SUPPORTED_LOCALES } from "../i18n/config.js";
-import { EmptyState } from "../components/States.js";
 import { LockedFeature } from "../components/States.js";
 import { ALL_ISSUE_TYPES, ISSUE_REGISTRY } from "../detectors/registry.js";
 import { featureEnabled } from "../billing/gating.js";
 
 /**
- * Settings (spec <ui_spec> §5): issue-type toggles, catalog scope, weekly
- * digest, auto-tag (plan-gated, with the App Bridge optional-scope request
- * flow), and interface/notification language. Each section saves
- * independently; settings merge into the existing jsonb (never clobber).
+ * Settings (spec <ui_spec> §5): issue-type toggles, catalog scope, auto-tag
+ * (plan-gated, with the App Bridge optional-scope request flow), and interface
+ * language. Each section saves independently; settings merge into the
+ * existing jsonb (never clobber).
  *
  * The auto-tag grant flow is the ONLY place that talks to App Bridge scopes
  * (shopify.scopes.request) — deliberately isolated here, per docs/api-notes.
@@ -41,44 +40,23 @@ const SAVE_INTENTS = z.discriminatedUnion("intent", [
     includeArchived: z.coerce.boolean(),
     acceptNonGtinBarcodes: z.coerce.boolean(),
   }),
-  z.object({
-    intent: z.literal("digest"),
-    enabled: z.coerce.boolean(),
-    email: z.string().trim().email().max(255).optional().or(z.literal("").transform(() => undefined)),
-    day: z.coerce.number().int().min(0).max(6),
-    hour: z.coerce.number().int().min(0).max(23),
-    skipWhenEmpty: z.coerce.boolean(),
-  }),
   z.object({ intent: z.literal("autoTag"), enabled: z.coerce.boolean() }),
   z.object({
     intent: z.literal("language"),
     uiLocale: z.string().refine((v) => (SUPPORTED_LOCALES as readonly string[]).includes(v)),
-    notifyLocale: z.string().refine((v) => (SUPPORTED_LOCALES as readonly string[]).includes(v)),
   }),
 ]);
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const shop = await requireAdminShopContext(request);
-  // Delivery problems from the Resend webhook (spec <notifications>):
-  // recent bounced / failed / complained email sends, newest first.
-  const deliveryProblems = await db.notificationLog.findMany({
-    where: { shopId: shop.id, channel: "email", status: { in: ["bounced", "failed", "complained"] } },
-    orderBy: { sentAt: "desc" },
-    take: 5,
-    select: { status: true, errorCode: true, sentAt: true, periodKey: true },
-  });
   return {
     settings: shop.settings,
     scopes: shop.scopes,
     plan: shop.plan,
     uiLocale: shop.uiLocale,
-    notifyLocale: shop.notifyLocale,
     featureEnabled: {
-      digest: featureEnabled(shop.plan, "digest"),
       autoTag: featureEnabled(shop.plan, "autoTag"),
-      telegram: featureEnabled(shop.plan, "telegram"),
     },
-    deliveryProblems,
   };
 }
 
@@ -103,12 +81,7 @@ export async function action({ request }: ActionFunctionArgs) {
     includeArchived: boolean("includeArchived"),
     acceptNonGtinBarcodes: boolean("acceptNonGtinBarcodes"),
     enabled: boolean("enabled"),
-    email: form.get("email") ?? undefined,
-    day: form.get("day") ?? undefined,
-    hour: form.get("hour") ?? undefined,
-    skipWhenEmpty: boolean("skipWhenEmpty"),
     uiLocale: form.get("uiLocale") ?? undefined,
-    notifyLocale: form.get("notifyLocale") ?? undefined,
   });
   if (!parsed.success) {
     return new Response(JSON.stringify({ error: "bad_request" }), {
@@ -136,14 +109,6 @@ export async function action({ request }: ActionFunctionArgs) {
     settings.includeDraft = data.includeDraft;
     settings.includeArchived = data.includeArchived;
     settings.acceptNonGtinBarcodes = data.acceptNonGtinBarcodes;
-  } else if (data.intent === "digest") {
-    settings.digest = {
-      enabled: data.enabled,
-      email: data.email,
-      day: data.day,
-      hour: data.hour,
-      skipWhenEmpty: data.skipWhenEmpty,
-    };
   } else if (data.intent === "autoTag") {
     // The scan-side gate checks the write_products scope every run; enabling
     // here is an opt-in only (spec <hard_constraints> 3/5).
@@ -151,7 +116,7 @@ export async function action({ request }: ActionFunctionArgs) {
   } else {
     await db.shop.update({
       where: { id: shop.id },
-      data: { uiLocale: resolveLocale(data.uiLocale), notifyLocale: resolveLocale(data.notifyLocale) },
+      data: { uiLocale: resolveLocale(data.uiLocale) },
     });
     return new Response(JSON.stringify({ ok: true, toast: "toast.saved" }), {
       headers: { "content-type": "application/json" },
@@ -205,7 +170,6 @@ export default function SettingsRoute() {
   const actionData = useActionData<{ ok?: boolean; toast?: string | null }>();
   const result = actionData?.ok ? actionData : null;
   const hasWriteProducts = (data.scopes ?? "").split(",").includes("write_products");
-  const digest = data.settings.digest;
 
   const localeOptions = [...SUPPORTED_LOCALES];
 
@@ -270,46 +234,6 @@ export default function SettingsRoute() {
         </form>
       </s-section>
 
-      <s-section heading={t("settings.digest.title")}>
-        {data.featureEnabled.digest ? (
-          <>
-            <form method="post" action="/app/settings">
-              <s-stack gap="base">
-                <input type="hidden" name="intent" value="digest" />
-                <input type="checkbox" id="digestEnabled" name="enabled" defaultChecked={digest?.enabled ?? false} />
-                <label htmlFor="digestEnabled">{t("settings.digest.enabled")}</label>
-                <label htmlFor="digestEmail">{t("settings.digest.email")}</label>
-                <input id="digestEmail" name="email" type="email" defaultValue={digest?.email ?? ""} />
-                <label htmlFor="digestDay">{t("settings.digest.day")}</label>
-                <input id="digestDay" name="day" type="number" min={0} max={6} defaultValue={digest?.day ?? 1} />
-                <label htmlFor="digestHour">{t("settings.digest.hour")}</label>
-                <input id="digestHour" name="hour" type="number" min={0} max={23} defaultValue={digest?.hour ?? 9} />
-                <input type="checkbox" id="digestSkip" name="skipWhenEmpty" defaultChecked={digest?.skipWhenEmpty ?? true} />
-                <label htmlFor="digestSkip">{t("settings.digest.skipWhenEmpty")}</label>
-                <s-button type="submit">{t("common.save")}</s-button>
-              </s-stack>
-            </form>
-            <s-stack gap="base">
-              <h3>{t("settings.digest.bounces")}</h3>
-              {data.deliveryProblems.length === 0 ? (
-                <s-badge tone="success">{t("settings.digest.none")}</s-badge>
-              ) : (
-                <ul>
-                  {data.deliveryProblems.map((problem) => (
-                    <li key={`${problem.periodKey}-${problem.status}`}>
-                      {new Date(problem.sentAt).toISOString().slice(0, 10)} · {problem.status}
-                      {problem.errorCode ? ` · ${problem.errorCode}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </s-stack>
-          </>
-        ) : (
-          <LockedFeature message={t("plans.locked.digest")} />
-        )}
-      </s-section>
-
       <s-section heading={t("settings.autoTag.title")}>
         {data.featureEnabled.autoTag ? (
           <form method="post" action="/app/settings">
@@ -331,28 +255,12 @@ export default function SettingsRoute() {
         )}
       </s-section>
 
-      <s-section heading={t("settings.telegram.title")}>
-        {data.featureEnabled.telegram ? (
-          <EmptyState message={t("settings.telegram.connectHelp")} />
-        ) : (
-          <LockedFeature message={t("plans.locked.telegram")} />
-        )}
-      </s-section>
-
       <s-section heading={t("settings.language.title")}>
         <form method="post" action="/app/settings">
           <s-stack gap="base">
             <input type="hidden" name="intent" value="language" />
             <label htmlFor="uiLocale">{t("settings.language.interface")}</label>
             <select id="uiLocale" name="uiLocale" defaultValue={data.uiLocale ?? "en"}>
-              {localeOptions.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="notifyLocale">{t("settings.language.notifications")}</label>
-            <select id="notifyLocale" name="notifyLocale" defaultValue={data.notifyLocale ?? "en"}>
               {localeOptions.map((l) => (
                 <option key={l} value={l}>
                   {l}

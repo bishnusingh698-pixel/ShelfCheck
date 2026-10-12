@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Trouvez et corrigez les problèmes de catalogue avant qu'ils bloquent une expédition.",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "Se connecter",
+    "button": "Se connecter",
+    "shopLabel": "Domaine de la boutique",
+    "shopDetails": "exemple.myshopify.com",
+    "error": {
+      "missingShop": "Veuillez saisir le domaine de votre boutique pour vous connecter",
+      "invalidShop": "Veuillez saisir un domaine de boutique valide pour vous connecter"
+    }
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "issues": "Problèmes",
+    "rules": "Règles",
+    "settings": "Paramètres",
+    "plans": "Offres",
+    "activity": "Activité",
+    "activityBadge": "Nouveau"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "retry": "Réessayer",
+    "undo": "Annuler",
+    "close": "Fermer",
+    "copySku": "Copier la référence (SKU)",
+    "copied": "Copié dans le presse-papiers",
+    "openInAdmin": "Ouvrir dans l'administration Shopify",
+    "loading": "Chargement…",
+    "errorTitle": "Une erreur est survenue",
+    "errorBody": "La dernière action n'a pas pu aboutir. Vous pouvez réessayer.",
+    "empty": "Rien à afficher pour le moment"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "Référence (SKU) manquante",
+      "DUPLICATE_SKU": "Référence (SKU) en double",
+      "MISSING_BARCODE": "Code-barres manquant",
+      "DUPLICATE_BARCODE": "Code-barres en double",
+      "INVALID_BARCODE": "Code-barres non valide",
+      "PUBLISHED_ZERO_INVENTORY": "Publié sans stock",
+      "VARIANT_MISSING_IMAGE": "Image de variante manquante",
+      "MISSING_WEIGHT": "Poids manquant",
+      "MISSING_COST": "Coût manquant",
+      "COMPARE_AT_INVALID": "Prix barré non valide",
+      "ZERO_PRICE": "Prix égal à zéro"
+    },
+    "severity": {
+      "high": "Élevée",
+      "medium": "Moyenne",
+      "low": "Faible"
+    },
+    "status": {
+      "open": "Ouvert",
+      "snoozed": "Reporté",
+      "ignored": "Ignoré",
+      "intentional": "Intentionnel",
+      "resolved": "Résolu"
+    },
+    "hint": {
+      "scientific_notation": "Ressemble à une notation scientifique (une exportation CSV a peut-être corrompu ce code-barres)",
+      "likely_dropped_leading_zero": "Une valeur à 11 chiffres ; un zéro initial a peut-être été perdu",
+      "inner_whitespace": "Contient des espaces à l'intérieur de la valeur"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "Le prix barré est inférieur au prix",
+      "COMPARE_AT_INVALID_equal": "Le prix barré est égal au prix",
+      "case_or_space_only": "Ces références (SKU) ne diffèrent que par la casse ou les espaces",
+      "group_grew": "Une nouvelle variante a rejoint ce groupe"
+    },
+    "actions": {
+      "snooze": "Reporter à plus tard",
+      "ignore": "Ignorer",
+      "intentional": "Marquer comme intentionnel",
+      "resolve": "Marquer comme résolu",
+      "unsnooze": "Réafficher"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 jours} =30 {30 jours} =90 {90 jours} other {{count} jours}}",
+      "banner": "Reporté jusqu'au {date}. Il sera réaffiché automatiquement."
+    },
+    "list": {
+      "title": "Problèmes",
+      "empty": "Aucun problème ne correspond aux filtres actuels. Votre catalogue semble en bon état.",
+      "filterType": "Type de problème",
+      "filterSeverity": "Gravité",
+      "filterStatus": "Statut",
+      "filterVendor": "Marque",
+      "search": "Rechercher par référence (SKU) ou titre de produit",
+      "sortBy": "Trier par",
+      "sortSeverity": "Gravité",
+      "sortFirstSeen": "Première détection",
+      "bulkSnooze": "Reporter la sélection",
+      "bulkIgnore": "Ignorer la sélection",
+      "bulkIntentional": "Marquer la sélection comme intentionnelle",
+      "selected": "{count, plural, =0 {Aucun problème sélectionné} one {# problème sélectionné} other {# problèmes sélectionnés}}",
+      "newBadge": "Nouveau",
+      "groupMembers": "Tous les membres de ce groupe",
+      "overCapHidden": "{count, plural, one {# problème dépasse la limite d'affichage de votre offre} other {# problèmes dépassent la limite d'affichage de votre offre}}",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageStatus": "Page {page} sur {pageCount} ({total} problèmes)",
+      "actions": "Actions",
+      "newOnlyFilter": "Nouveaux uniquement"
+    }
+  },
+  "dashboard": {
+    "title": "Santé du catalogue",
+    "healthScore": "Score de santé",
+    "band": {
+      "excellent": "Excellent",
+      "good": "Bon",
+      "needs_attention": "À améliorer",
+      "critical": "Critique"
+    },
+    "counts": {
+      "title": "Problèmes par gravité",
+      "high": "{count, plural, one {# problème de gravité élevée} other {# problèmes de gravité élevée}}",
+      "medium": "{count, plural, one {# problème de gravité moyenne} other {# problèmes de gravité moyenne}}",
+      "low": "{count, plural, one {# problème de gravité faible} other {# problèmes de gravité faible}}",
+      "byType": "Problèmes par type"
+    },
+    "scan": {
+      "title": "Dernière analyse",
+      "status": {
+        "queued": "En file d'attente",
+        "running": "Analyse en cours…",
+        "parsing": "Lecture des résultats…",
+        "completed": "Terminée",
+        "failed": "Échec",
+        "canceled": "Annulée"
+      },
+      "runNow": "Analyser maintenant",
+      "lastScanAt": "Dernière analyse {time}",
+      "never": "Jamais analysé",
+      "cooldown": "Vous pourrez relancer une analyse dans {minutes} minutes",
+      "failedBody": "La dernière analyse n'a pas pu aboutir. Vous pouvez réessayer.",
+      "variants": "{count, plural, one {# variante analysée} other {# variantes analysées}}"
+    },
+    "usage": {
+      "title": "Utilisation de l'offre",
+      "variants": "{analyzed} variantes analysées sur {cap}",
+      "overCap": "{count, plural, one {# variante dépassait votre offre et n'a pas été analysée} other {# variantes dépassaient votre offre et n'ont pas été analysées}}",
+      "overCapNote": "Des doublons les concernant peuvent avoir été manqués.",
+      "upgrade": "Passer à l'offre supérieure"
+    },
+    "trend": {
+      "title": "Nouveaux vs résolus",
+      "last8": "8 dernières analyses",
+      "new": "Nouveaux",
+      "resolved": "Résolus",
+      "scan": "Analyse {n}"
+    },
+    "onboarding": {
+      "title": "Configurer ShelfCheck",
+      "scanRunning": "Première analyse en cours",
+      "reviewIssues": "Examiner vos problèmes",
+      "done": "Terminé",
+      "chooseChecks": "Choisir les contrôles à effectuer"
+    },
+    "sinceLastVisit": {
+      "title": "Depuis votre dernière visite",
+      "newIssues": "{count, plural, =0 {Aucun nouveau problème} one {# nouveau problème} other {# nouveaux problèmes}} depuis votre dernière visite ({high, plural, =0 {aucun de gravité élevée} one {# de gravité élevée} other {# de gravité élevée}})",
+      "resolvedIssues": "{count, plural, =0 {Aucun problème résolu} one {# problème résolu} other {# problèmes résolus}} depuis votre dernière visite",
+      "scansFinished": "{count, plural, one {# analyse terminée} other {# analyses terminées}} depuis votre dernière visite",
+      "scansFailed": "{count, plural, one {# analyse a échoué} other {# analyses ont échoué}} depuis votre dernière visite",
+      "scoreChange": "Le score de santé a changé de {delta} depuis votre dernière visite",
+      "markSeen": "Tout marquer comme vu",
+      "nothingNew": "Rien de nouveau depuis votre dernière visite",
+      "seenToast": "Activité marquée comme vue.",
+      "undo": "Annuler"
+    },
+    "needsAttention": {
+      "title": "À améliorer",
+      "view": "Consulter",
+      "openInAdmin": "Ouvrir dans l'administration Shopify"
+    },
+    "weeklySummary": {
+      "title": "Cette semaine",
+      "newIssues": "{count, plural, =0 {Aucun nouveau problème} one {# nouveau problème} other {# nouveaux problèmes}} cette semaine (semaine dernière : {last})",
+      "resolvedIssues": "{count, plural, =0 {Aucun problème résolu} one {# problème résolu} other {# problèmes résolus}} cette semaine (semaine dernière : {last})",
+      "scoreChange": "Score de santé {direction} de {delta} depuis la semaine dernière",
+      "improved": "en hausse",
+      "declined": "en baisse"
+    }
+  },
+  "scan": {
+    "started": "Analyse lancée. Cela prend généralement quelques minutes.",
+    "denied": {
+      "free": "Votre offre inclut une analyse par mois. Passez à une offre supérieure pour analyser plus souvent.",
+      "dailyLimit": "Vous avez atteint la limite d'analyses quotidienne de votre offre.",
+      "cooldown": "Une analyse vient de se terminer. Veuillez patienter avant d'en lancer une autre.",
+      "active": "Une analyse est déjà en cours."
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "issueTypes": "Types de problèmes",
+    "issueTypesHelp": "Désactivez tout contrôle que vous ne souhaitez pas voir.",
+    "catalog": {
+      "title": "Périmètre du catalogue",
+      "includeDraft": "Inclure les brouillons",
+      "includeArchived": "Inclure les produits archivés",
+      "acceptNonGtin": "Accepter les codes-barres non GS1",
+      "acceptNonGtinHelp": "Si activé, seuls les codes-barres de longueur GS1 sont vérifiés par la clé de contrôle."
+    },
+    "autoTag": {
+      "title": "Étiquetage automatique",
+      "enable": "Étiqueter les produits concernés",
+      "help": "Ajoute l'étiquette « shelfcheck-fix » aux produits présentant des problèmes ouverts. Nécessite la permission write_products, que vous pouvez accorder ici.",
+      "requestScope": "Accorder la permission",
+      "granted": "Permission accordée",
+      "denied": "L'étiquetage automatique nécessite la permission write_products."
+    },
+    "language": {
+      "title": "Langue",
+      "interface": "Langue de l'interface"
+    }
+  },
+  "rules": {
+    "title": "Règles d'ignorance",
+    "empty": "Aucune règle d'ignorance pour le moment. Les règles empêchent les problèmes correspondants d'apparaître dans votre liste.",
+    "scope": {
+      "sku": "Référence (SKU)",
+      "variant": "Variante",
+      "product": "Produit",
+      "vendor": "Marque"
+    },
+    "value": "Valeur",
+    "issueType": "Type de problème (facultatif)",
+    "issueTypeAny": "Tous les types",
+    "note": "Note (facultatif)",
+    "add": "Ajouter la règle",
+    "delete": "Supprimer",
+    "scopeLabel": "Périmètre de la règle"
+  },
+  "plans": {
+    "title": "Offres",
+    "free": "Gratuit",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Comparer les offres",
+    "current": "Offre actuelle",
+    "upgrade": "Voir les offres et passer à l'offre supérieure",
+    "openManagedPricing": "Gérer l'abonnement dans Shopify",
+    "locked": {
+      "watchers": "Les déclencheurs webhook sont disponibles dans les offres Starter et Pro.",
+      "autoTag": "L'étiquetage automatique est disponible dans l'offre Pro.",
+      "weeklySummary": "Le récapitulatif hebdomadaire est disponible dans les offres Starter et Pro.",
+      "activityHistory": "Un historique d'activité plus long est disponible dans les offres payantes."
+    },
+    "feature": {
+      "scans": "Analyses planifiées",
+      "manualScans": "Analyses manuelles par jour",
+      "issuesShown": "Problèmes affichés",
+      "variantCap": "Variantes analysées",
+      "watchers": "Déclencheurs webhook",
+      "csv": "Exportation CSV",
+      "autoTag": "Étiquetage automatique",
+      "price": "Prix",
+      "weeklySummary": "Récapitulatif hebdomadaire",
+      "activityHistory": "Historique d'activité (jours)"
+    },
+    "unlimited": "Illimité",
+    "yes": "Inclus",
+    "no": "Non inclus",
+    "scheduled": {
+      "monthly": "Mensuel",
+      "weekly": "Hebdomadaire",
+      "daily": "Quotidien"
+    }
+  },
+  "toast": {
+    "saved": "Paramètres enregistrés",
+    "snoozed": "Problème reporté",
+    "ignored": "Problème ignoré",
+    "intentional": "Marqué comme intentionnel",
+    "resolved": "Marqué comme résolu",
+    "scanStarted": "Analyse lancée",
+    "ruleAdded": "Règle ajoutée",
+    "ruleDeleted": "Règle supprimée",
+    "undone": "Annulé"
+  },
+  "csv": {
+    "export": "Exporter en CSV",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "Introuvable",
+    "forbidden": "Vous n'avez pas accès à cet élément",
+    "generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "activity": {
+    "title": "Activité",
+    "empty": "Aucune activité sur cette période pour le moment.",
+    "filter": "Filtrer par type",
+    "all": "Toute l'activité",
+    "older": "Les événements plus anciens restent enregistrés, mais sont masqués au-delà de la fenêtre d'historique de votre offre.",
+    "upgrade": "Passer à l'offre supérieure pour voir plus d'historique",
+    "markSeen": "Tout marquer comme vu",
+    "kind": {
+      "scan_completed": "Analyse terminée : {opened, plural, =0 {aucun nouveau problème} one {# nouveau problème} other {# nouveaux problèmes}}, {resolved, plural, =0 {aucun résolu} one {# résolu} other {# résolus}} ; score de santé {score}",
+      "scan_failed": "Échec de l'analyse : {code}",
+      "issues_changed": "Problèmes modifiés : {opened, plural, =0 {aucun nouveau} one {# nouveau} other {# nouveaux}}, {resolved, plural, =0 {aucun résolu} one {# résolu} other {# résolus}}",
+      "group_regrew": "Un groupe de doublons marqué comme intentionnel s'est agrandi : {count, plural, one {# nouveau membre} other {# nouveaux membres}}",
+      "snoozes_reopened": "{count, plural, one {# problème reporté a été réaffiché} other {# problèmes reportés ont été réaffichés}}",
+      "autotag_changed": "{count, plural, one {# produit étiqueté} other {# produits étiquetés}} avec shelfcheck-fix",
+      "auto_tag_disabled": "Étiquetage automatique désactivé : la permission write_products a été retirée",
+      "plan_changed": "Offre changée pour {plan}",
+      "over_cap": "{count, plural, one {# variante dépassait} other {# variantes dépassaient}} votre offre et n'ont pas été analysées"
+    },
+    "filterKind": {
+      "scan_completed": "Analyses",
+      "scan_failed": "Échecs d'analyse",
+      "issues_changed": "Changements de problèmes",
+      "group_regrew": "Groupes de doublons",
+      "snoozes_reopened": "Problèmes réaffichés",
+      "autotag_changed": "Étiquetage automatique",
+      "auto_tag_disabled": "Étiquetage désactivé",
+      "plan_changed": "Changements d'offre",
+      "over_cap": "Dépassement d'offre"
+    },
+    "pageStatus": "Page {page} sur {pageCount}",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "window": "Affichage des {days} derniers jours d'activité pour votre offre.",
+    "olderHidden": "{count, plural, one {# événement plus ancien est} other {# événements plus anciens sont}} enregistrés, mais masqués au-delà de la fenêtre d'historique de votre offre."
+  }
+}

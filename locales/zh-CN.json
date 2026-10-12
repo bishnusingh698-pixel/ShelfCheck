@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "在目录问题阻碍发货之前发现并修复它们。",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "登录",
+    "button": "登录",
+    "shopLabel": "商店域名",
+    "shopDetails": "example.myshopify.com",
+    "error": {
+      "missingShop": "请输入您的商店域名以登录",
+      "invalidShop": "请输入有效的商店域名以登录"
+    }
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "issues": "问题",
+    "rules": "规则",
+    "settings": "设置",
+    "plans": "方案",
+    "activity": "活动",
+    "activityBadge": "新"
+  },
+  "common": {
+    "cancel": "取消",
+    "save": "保存",
+    "retry": "重试",
+    "undo": "撤销",
+    "close": "关闭",
+    "copySku": "复制 SKU",
+    "copied": "已复制到剪贴板",
+    "openInAdmin": "在 Shopify 后台中打开",
+    "loading": "加载中…",
+    "errorTitle": "出了点问题",
+    "errorBody": "上一个操作未能完成。您可以重试。",
+    "empty": "此处还没有内容"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "缺少 SKU",
+      "DUPLICATE_SKU": "SKU 重复",
+      "MISSING_BARCODE": "缺少条形码",
+      "DUPLICATE_BARCODE": "条形码重复",
+      "INVALID_BARCODE": "条形码无效",
+      "PUBLISHED_ZERO_INVENTORY": "库存为零却已发布",
+      "VARIANT_MISSING_IMAGE": "变体缺少图片",
+      "MISSING_WEIGHT": "缺少重量",
+      "MISSING_COST": "缺少成本",
+      "COMPARE_AT_INVALID": "划线价无效",
+      "ZERO_PRICE": "价格为零"
+    },
+    "severity": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "status": {
+      "open": "打开",
+      "snoozed": "已暂缓",
+      "ignored": "已忽略",
+      "intentional": "有意为之",
+      "resolved": "已解决"
+    },
+    "hint": {
+      "scientific_notation": "看起来像科学计数法（CSV 导出可能损坏了此条形码）",
+      "likely_dropped_leading_zero": "11 位数字的值；可能丢失了前导零",
+      "inner_whitespace": "值内部含有空格"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "划线价低于售价",
+      "COMPARE_AT_INVALID_equal": "划线价等于售价",
+      "case_or_space_only": "这些 SKU 仅大小写或空格不同",
+      "group_grew": "有新变体加入了此组"
+    },
+    "actions": {
+      "snooze": "暂缓",
+      "ignore": "忽略",
+      "intentional": "标记为有意为之",
+      "resolve": "标记为已解决",
+      "unsnooze": "取消暂缓"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 天} =30 {30 天} =90 {90 天} other {{count} 天}}",
+      "banner": "已暂缓至 {date}。到期后会自动重新打开。"
+    },
+    "list": {
+      "title": "问题",
+      "empty": "没有符合当前筛选条件的问题。您的目录看起来不错。",
+      "filterType": "问题类型",
+      "filterSeverity": "严重程度",
+      "filterStatus": "状态",
+      "filterVendor": "厂商",
+      "search": "按 SKU 或商品标题搜索",
+      "sortBy": "排序方式",
+      "sortSeverity": "严重程度",
+      "sortFirstSeen": "首次发现",
+      "bulkSnooze": "暂缓所选",
+      "bulkIgnore": "忽略所选",
+      "bulkIntentional": "将所选标记为有意为之",
+      "selected": "{count, plural, =0 {未选择任何问题} other {已选择 # 个问题}}",
+      "newBadge": "新",
+      "groupMembers": "此组的所有成员",
+      "overCapHidden": "{count, plural, other {有 # 个问题超出您方案的显示上限}}",
+      "previous": "上一页",
+      "next": "下一页",
+      "pageStatus": "第 {page} 页，共 {pageCount} 页（{total} 个问题）",
+      "actions": "操作",
+      "newOnlyFilter": "仅显示新问题"
+    }
+  },
+  "dashboard": {
+    "title": "目录健康度",
+    "healthScore": "健康评分",
+    "band": {
+      "excellent": "优秀",
+      "good": "良好",
+      "needs_attention": "需要关注",
+      "critical": "危急"
+    },
+    "counts": {
+      "title": "按严重程度划分的问题",
+      "high": "{count, plural, other {# 个高严重程度问题}}",
+      "medium": "{count, plural, other {# 个中等严重程度问题}}",
+      "low": "{count, plural, other {# 个低严重程度问题}}",
+      "byType": "按类型划分的问题"
+    },
+    "scan": {
+      "title": "上次扫描",
+      "status": {
+        "queued": "排队中",
+        "running": "正在扫描…",
+        "parsing": "正在读取结果…",
+        "completed": "已完成",
+        "failed": "失败",
+        "canceled": "已取消"
+      },
+      "runNow": "立即扫描",
+      "lastScanAt": "上次扫描于 {time}",
+      "never": "从未扫描",
+      "cooldown": "您可以在 {minutes} 分钟后再次扫描",
+      "failedBody": "上次扫描未能完成。您可以重试。",
+      "variants": "{count, plural, other {已分析 # 个变体}}"
+    },
+    "usage": {
+      "title": "方案用量",
+      "variants": "已分析 {analyzed}/{cap} 个变体",
+      "overCap": "{count, plural, other {有 # 个变体超出您的方案，未被分析}}",
+      "overCapNote": "涉及这些变体的重复项可能被遗漏。",
+      "upgrade": "升级"
+    },
+    "trend": {
+      "title": "新增与解决对比",
+      "last8": "最近 8 次扫描",
+      "new": "新增",
+      "resolved": "已解决",
+      "scan": "扫描 {n}"
+    },
+    "onboarding": {
+      "title": "设置 ShelfCheck",
+      "scanRunning": "首次扫描正在进行",
+      "reviewIssues": "查看您的问题",
+      "done": "完成",
+      "chooseChecks": "选择要运行的检查"
+    },
+    "sinceLastVisit": {
+      "title": "自您上次查看以来",
+      "newIssues": "自您上次查看以来有 {count, plural, =0 {没有新问题} other {# 个新问题}}（{high, plural, =0 {没有高严重程度} other {其中 # 个为高严重程度}}）",
+      "resolvedIssues": "自您上次查看以来有 {count, plural, =0 {没有已解决的问题} other {# 个问题已解决}}",
+      "scansFinished": "自您上次查看以来完成了 {count, plural, other {# 次扫描}}",
+      "scansFailed": "自您上次查看以来有 {count, plural, other {# 次扫描失败}}",
+      "scoreChange": "自您上次查看以来健康评分变化了 {delta}",
+      "markSeen": "全部标记为已读",
+      "nothingNew": "自您上次查看以来没有新动态",
+      "seenToast": "活动已标记为已读。",
+      "undo": "撤销"
+    },
+    "needsAttention": {
+      "title": "需要关注",
+      "view": "查看",
+      "openInAdmin": "在 Shopify 后台中打开"
+    },
+    "weeklySummary": {
+      "title": "本周",
+      "newIssues": "本周有 {count, plural, =0 {没有新问题} other {# 个新问题}}（上周：{last}）",
+      "resolvedIssues": "本周有 {count, plural, =0 {没有已解决的问题} other {# 个问题已解决}}（上周：{last}）",
+      "scoreChange": "健康评分较上周{direction} {delta}",
+      "improved": "上升",
+      "declined": "下降"
+    }
+  },
+  "scan": {
+    "started": "扫描已开始。通常需要几分钟。",
+    "denied": {
+      "free": "您的方案每月包含一次扫描。升级后可更频繁地扫描。",
+      "dailyLimit": "您已达到方案今日的扫描次数上限。",
+      "cooldown": "扫描刚刚运行过。请稍候再开始新的扫描。",
+      "active": "已有扫描正在进行。"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "issueTypes": "问题类型",
+    "issueTypesHelp": "关闭您不想看到的任何检查。",
+    "catalog": {
+      "title": "目录范围",
+      "includeDraft": "包含草稿",
+      "includeArchived": "包含已归档商品",
+      "acceptNonGtin": "接受非 GS1 条形码",
+      "acceptNonGtinHelp": "开启后，仅对 GS1 长度的条形码校验校验位。"
+    },
+    "autoTag": {
+      "title": "自动标签",
+      "enable": "为有问题的商品添加标签",
+      "help": "为存在未解决问题的商品添加“shelfcheck-fix”标签。需要 write_products 权限，您可以在此处授予。",
+      "requestScope": "授予权限",
+      "granted": "已授予权限",
+      "denied": "自动标签功能需要 write_products 权限。"
+    },
+    "language": {
+      "title": "语言",
+      "interface": "界面语言"
+    }
+  },
+  "rules": {
+    "title": "忽略规则",
+    "empty": "暂无忽略规则。规则可让匹配的问题不显示在您的列表中。",
+    "scope": {
+      "sku": "SKU",
+      "variant": "变体",
+      "product": "商品",
+      "vendor": "厂商"
+    },
+    "value": "值",
+    "issueType": "问题类型（可选）",
+    "issueTypeAny": "任意类型",
+    "note": "备注（可选）",
+    "add": "添加规则",
+    "delete": "删除",
+    "scopeLabel": "规则范围"
+  },
+  "plans": {
+    "title": "方案",
+    "free": "免费",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "比较方案",
+    "current": "当前方案",
+    "upgrade": "查看方案并升级",
+    "openManagedPricing": "在 Shopify 中管理订阅",
+    "locked": {
+      "watchers": "Webhook 监听功能适用于 Starter 和 Pro 方案。",
+      "autoTag": "自动标签功能适用于 Pro 方案。",
+      "weeklySummary": "每周摘要适用于 Starter 和 Pro 方案。",
+      "activityHistory": "更长的活动历史记录适用于付费方案。"
+    },
+    "feature": {
+      "scans": "计划扫描",
+      "manualScans": "每日手动扫描次数",
+      "issuesShown": "显示的问题数",
+      "variantCap": "分析的变体数",
+      "watchers": "Webhook 监听",
+      "csv": "CSV 导出",
+      "autoTag": "自动标签",
+      "price": "价格",
+      "weeklySummary": "每周摘要",
+      "activityHistory": "活动历史记录（天）"
+    },
+    "unlimited": "不限",
+    "yes": "包含",
+    "no": "不包含",
+    "scheduled": {
+      "monthly": "每月",
+      "weekly": "每周",
+      "daily": "每日"
+    }
+  },
+  "toast": {
+    "saved": "设置已保存",
+    "snoozed": "问题已暂缓",
+    "ignored": "问题已忽略",
+    "intentional": "已标记为有意为之",
+    "resolved": "已标记为已解决",
+    "scanStarted": "扫描已开始",
+    "ruleAdded": "规则已添加",
+    "ruleDeleted": "规则已删除",
+    "undone": "已撤销"
+  },
+  "csv": {
+    "export": "导出 CSV",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "未找到",
+    "forbidden": "您无权访问此内容",
+    "generic": "出了点问题。请重试。"
+  },
+  "activity": {
+    "title": "活动",
+    "empty": "此时间段内还没有活动。",
+    "filter": "按类型筛选",
+    "all": "全部活动",
+    "older": "较旧的事件仍会保存，但会隐藏在您方案的历史记录窗口之外。",
+    "upgrade": "升级以查看更多历史记录",
+    "markSeen": "全部标记为已读",
+    "kind": {
+      "scan_completed": "扫描完成：{opened, plural, =0 {没有新问题} other {新增 # 个问题}}，{resolved, plural, =0 {没有已解决的} other {已解决 # 个}}；健康评分 {score}",
+      "scan_failed": "扫描失败：{code}",
+      "issues_changed": "问题发生变化：{opened, plural, =0 {没有新增} other {新增 # 个}}，{resolved, plural, =0 {没有已解决的} other {已解决 # 个}}",
+      "group_regrew": "标记为有意为之的重复组增加了成员：{count, plural, =0 {没有新成员} other {新增 # 个成员}}",
+      "snoozes_reopened": "{count, plural, other {# 个已暂缓的问题重新打开}}",
+      "autotag_changed": "{count, plural, other {已为 # 个商品添加 shelfcheck-fix 标签}}",
+      "auto_tag_disabled": "自动标签已停用：write_products 权限已被移除",
+      "plan_changed": "方案已更改为 {plan}",
+      "over_cap": "{count, plural, other {有 # 个变体超出您的方案，未被分析}}"
+    },
+    "filterKind": {
+      "scan_completed": "扫描",
+      "scan_failed": "扫描失败",
+      "issues_changed": "问题变化",
+      "group_regrew": "重复组",
+      "snoozes_reopened": "重新打开的暂缓项",
+      "autotag_changed": "自动标签",
+      "auto_tag_disabled": "自动标签已停用",
+      "plan_changed": "方案变更",
+      "over_cap": "超出方案上限"
+    },
+    "pageStatus": "第 {page} 页，共 {pageCount} 页",
+    "previous": "上一页",
+    "next": "下一页",
+    "window": "正在显示您方案最近 {days} 天的活动。",
+    "olderHidden": "{count, plural, other {有 # 条较旧的事件已保存，但隐藏在您方案的历史记录窗口之外}}。"
+  }
+}
