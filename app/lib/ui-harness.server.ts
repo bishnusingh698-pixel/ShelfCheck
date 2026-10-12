@@ -50,10 +50,16 @@ export function harnessSession(request?: Request): HarnessSession | null {
 export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> {
   if (!uiHarnessActive()) return;
 
-  const existing = await client.shop.findUnique({ where: { id: HARNESS_SHOP_ID } });
+  // Serialize across concurrent requests and server restarts: the advisory
+  // lock makes the find-then-seed sequence atomic, so two harness boots (or
+  // two parallel loader calls) can never both pass the existence check and
+  // then collide on the shop id (P2002 crashes the request otherwise).
+  await client.$transaction(async (tx) => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(918273645)`;
+  const existing = await tx.shop.findUnique({ where: { id: HARNESS_SHOP_ID } });
   if (existing) return; // already seeded for this server run
 
-  await client.shop.create({
+  await tx.shop.create({
     data: {
       id: HARNESS_SHOP_ID,
       shopDomain: HARNESS_SHOP_DOMAIN,
@@ -70,7 +76,7 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
     // Most recent scan finished 2 days ago: past the 10-minute cooldown and
     // outside today's manual-scan window, so the dashboard shows Scan now.
     const finishedAt = new Date(now - 2 * 86_400_000 - i * 3_600_000);
-    await client.scan.create({
+    await tx.scan.create({
       data: {
         shopId: HARNESS_SHOP_ID,
         trigger: "scheduled",
@@ -93,7 +99,7 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
       },
     });
   }
-  await client.shop.update({
+  await tx.shop.update({
     where: { id: HARNESS_SHOP_ID },
     data: { lastScanAt: new Date(now - 2 * 86_400_000) },
   });
@@ -121,7 +127,7 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
     { type: "DUPLICATE_SKU", severity: "high", variantGid: "gid://shopify/ProductVariant/h402", productGid: "gid://shopify/Product/h5", productTitle: "Harness Dup Widget B", sku: "DUP-1", vendor: "OtherVendor", variantTitle: null, groupKey: "dup-1" },
   ];
   for (const issue of fixtureIssues) {
-    await client.issue.create({
+    await tx.issue.create({
       data: {
         shopId: HARNESS_SHOP_ID,
         type: issue.type,
@@ -145,7 +151,7 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
   }
 
   // Fresh-install fixture: first scan queued, none completed yet.
-  await client.shop.create({
+  await tx.shop.create({
     data: {
       id: HARNESS_ONBOARDING_SHOP_ID,
       shopDomain: HARNESS_ONBOARDING_SHOP_DOMAIN,
@@ -155,7 +161,7 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
       installedAt: new Date(),
     },
   });
-  await client.scan.create({
+  await tx.scan.create({
     data: {
       shopId: HARNESS_ONBOARDING_SHOP_ID,
       trigger: "install",
@@ -164,4 +170,5 @@ export async function seedUiHarnessFixture(client: PrismaClient): Promise<void> 
   });
 
   logger.warn({ shop: HARNESS_SHOP_DOMAIN }, "UI harness fixture seeded (test-only)");
+  });
 }

@@ -35,7 +35,11 @@ test("dashboard shows health score, scan status, plan usage, and counts", async 
 
   // Seeded fixture shop: latest completed scan has score 72.
   await expect(page.getByText("72", { exact: true })).toBeVisible();
-  await expect(page.getByText("Needs attention", { exact: true })).toBeVisible();
+  // The health-band badge (the needs-attention list card carries the same
+  // words as its heading, so scope to the badge).
+  await expect(
+    page.locator("s-badge", { hasText: "Needs attention" }).first(),
+  ).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Last scan" })).toBeVisible();
   await expect(page.getByText(/last scanned/i)).toBeVisible();
@@ -43,8 +47,9 @@ test("dashboard shows health score, scan status, plan usage, and counts", async 
   // Plan usage: 4821 variants analyzed against the 5000 starter cap.
   await expect(page.getByText(/4,821 of 5,000/i)).toBeVisible();
 
-  // Severity counts link to the filtered issue list.
-  await expect(page.getByRole("link", { name: "High" })).toHaveAttribute(
+  // Severity counts link to the filtered issue list. The v3 since-last-visit
+  // card links also match a partial "High", so require the exact name.
+  await expect(page.getByRole("link", { name: "High", exact: true })).toHaveAttribute(
     "href",
     "/app/issues?severity=high",
   );
