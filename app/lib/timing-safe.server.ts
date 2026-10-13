@@ -7,8 +7,6 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  * and every comparison is constant-time.
  */
 
-import { sha256Hex } from "./crypto.server.js";
-
 /** Generic string compare in constant time (length-mismatch still consumes a compare). */
 export function timingSafeStringEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a, "utf8");
@@ -29,12 +27,6 @@ export function timingSafeSecretEqual(provided: string | null | undefined, expec
 /** HMAC-SHA256, hex, with a versioned key prefix already stripped by caller. */
 export function hmacHex(key: string, message: string): string {
   return createHmac("sha256", key).update(message, "utf8").digest("hex");
-}
-
-export interface SignedToken {
-  /** Opaque, unguessable payload id (e.g. shop id + purpose). */
-  payload: string;
-  sig: string;
 }
 
 /** Create a signed token: `v1.<payload>.<sig>` (base64url payload). */
@@ -68,9 +60,6 @@ export function verifyToken(
     return null;
   }
 }
-
-/** One-time token helpers: only the SHA-256 hash is ever stored. */
-export const hashForStorage = sha256Hex;
 
 /** Shopify webhook HMAC: base64 HMAC-SHA256 over the raw body with the client secret. */
 export function shopifyHmacBase64(rawBody: string | Buffer, apiSecret: string): string {

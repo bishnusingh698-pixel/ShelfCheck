@@ -89,9 +89,6 @@ export interface IssueListResult {
   vendors: string[];
 }
 
-/** Duplicate groups are one punch-list entry per group (the spec's detail panel shows all members); count members for the badge. */
-const GROUPED_TYPES = new Set(["DUPLICATE_SKU", "DUPLICATE_BARCODE"]);
-
 interface IssueListInput {
   shopId: string;
   plan: string;
@@ -278,6 +275,3 @@ function str(value: unknown): string | null {
 }
 
 /** True when the issue type forms duplicate groups (members share groupKey). */
-export function isGroupedType(type: string): boolean {
-  return GROUPED_TYPES.has(type);
-}

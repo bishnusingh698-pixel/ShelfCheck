@@ -20,19 +20,6 @@ import { enqueue, isUniqueViolation, isRecordNotFound } from "../jobs/queue.serv
  * without PII").
  */
 
-export type WebhookTopic =
-  | "app/uninstalled"
-  | "app/scopes_update"
-  | "app_subscriptions/update"
-  | "customers/data_request"
-  | "customers/redact"
-  | "shop/redact"
-  | "bulk_operations/finish"
-  | "products/create"
-  | "products/update"
-  | "products/delete"
-  | "inventory_levels/update";
-
 const COMPLIANCE_CUSTOMER_TOPICS = new Set(["customers/data_request", "customers/redact"]);
 
 export interface IntakeInput {

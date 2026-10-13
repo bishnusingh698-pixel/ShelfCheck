@@ -7,7 +7,7 @@ import { getEnv } from "../env.server.js";
 import { adminHttpsUrl } from "../lib/admin-urls.js";
 import { translateTemplate, type Messages } from "../i18n/translate.js";
 import { useI18n } from "../i18n/i18n.context";
-import { formatNumber } from "../i18n/format";
+import { formatCurrency, formatNumber } from "../i18n/format";
 import { PLANS, type PlanId, type PlanLimits } from "../billing/plans.js";
 
 /**
@@ -53,7 +53,7 @@ export default function PlansRoute() {
   const price = (limits: PlanLimits): string =>
     limits.priceUsd === 0
       ? t("plans.free")
-      : new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(limits.priceUsd);
+      : formatCurrency(limits.priceUsd, locale, "USD");
 
   return (
     <s-page heading={t("plans.title")}>

@@ -12,8 +12,6 @@ import type { Logger } from "pino";
  * - No Redis, no session-level state: works through PgBouncer transaction mode.
  */
 
-export type JobStatus = "pending" | "running" | "done" | "failed";
-
 export interface EnqueueOptions {
   kind: string;
   payload: Record<string, unknown>;

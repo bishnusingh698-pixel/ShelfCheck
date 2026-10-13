@@ -13,10 +13,6 @@ import { translateTemplate, type Messages } from "./translate.js";
 const require = createRequire(import.meta.url);
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-export interface I18nBackend {
-  t: (key: string, options?: Record<string, unknown>) => string;
-}
-
 export type { Messages };
 
 function flatten(obj: unknown, prefix = "", out: Record<string, string> = {}): Record<string, string> {

@@ -1,3 +1,4 @@
+import { registerLifecycleWebhookProcessors, runProductSync, runInventorySync } from "../webhooks/processors.server.js";
 import type { Logger } from "pino";
 import { db } from "../db.server.js";
 import { logger } from "../lib/logger.server.js";
@@ -5,9 +6,9 @@ import { buildHandlerMap, validatePayload, SCAN_START_SCHEMA, SCAN_POLL_SCHEMA, 
 import type { JobHandler } from "./queue.server.js";
 import { makeJobExecutor } from "./executor.server.js";
 import { processWebhookEvent } from "../webhooks/intake.server.js";
-import { registerLifecycleWebhookProcessors, runProductSync } from "../webhooks/processors.server.js";
 import { startScan, pollScan } from "../scan/orchestrator.server.js";
-import { syncInventoryItem } from "../webhooks/inventory-sync.server.js";
+import { pollDelayMs } from "../scan/bulk-operation.server.js";
+import { enqueue } from "./queue.server.js";
 import { applyAutoTags } from "../autotag/autotag.server.js";
 
 /**
@@ -46,13 +47,28 @@ export function buildProductionHandlerMap(client = db): JobHandlers {
       const payload = validatePayload(SCAN_POLL_SCHEMA, job.payload);
       if (!job.shopId) throw new Error("scan_poll requires shopId");
       const makeExecutor = () => makeJobExecutor(job.shopId as string, client);
-      await pollScan({
+      const result = await pollScan({
         shopId: job.shopId,
         scanId: payload.scanId,
         makeExecutor,
         client,
         logger: logger as Logger,
       });
+      // Keep polling with exponential backoff (5 s start, 60 s cap) until the
+      // scan is terminal; the watchdog fails anything stuck for 60 minutes.
+      if (!result.terminal) {
+        const attempt = (payload.attempt ?? 0) + 1;
+        await enqueue(
+          {
+            kind: "scan_poll",
+            payload: { scanId: payload.scanId, attempt },
+            shopId: job.shopId,
+            runAt: new Date(Date.now() + pollDelayMs(attempt)),
+            dedupeKey: `scan_poll:${payload.scanId}`,
+          },
+          client,
+        );
+      }
     },
     product_sync: async (job) => {
       const payload = validatePayload(PRODUCT_SYNC_SCHEMA, job.payload);
@@ -60,12 +76,15 @@ export function buildProductionHandlerMap(client = db): JobHandlers {
     },
     inventory_sync: async (job) => {
       const payload = validatePayload(INVENTORY_SYNC_SCHEMA, job.payload);
-      await syncInventoryItem({
-        shopId: payload.shopId,
-        inventoryItemId: String(payload.inventoryItemId),
-        available: payload.available ?? null,
+      // runInventorySync wraps syncInventoryItem and records the coalesced
+      // issues_changed activity event when inventory changes open/resolve
+      // issues (matching the product_sync path).
+      await runInventorySync(
+        payload.shopId,
+        String(payload.inventoryItemId),
+        payload.available ?? null,
         client,
-      });
+      );
     },
     autotag_run: async (job) => {
       const payload = validatePayload(AUTOTAG_RUN_SCHEMA, job.payload);

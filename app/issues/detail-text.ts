@@ -4,6 +4,8 @@
  * rendered separately; this is the sentence that explains the finding.
  */
 
+import { hintDetailKey, type BarcodeHint } from "../detectors/barcode-hints.js";
+
 export type Translate = (key: string, params?: Record<string, unknown>) => string;
 
 export interface IssueDetailLike {
@@ -21,7 +23,7 @@ export function issueDetailText(t: Translate, issue: IssueDetailLike): string {
   }
 
   if (issue.type === "INVALID_BARCODE" && typeof d.hint === "string") {
-    return t(`issue.hint.${d.hint}`);
+    return t(`issue.${hintDetailKey(d.hint as BarcodeHint)}`);
   }
 
   if ((issue.type === "DUPLICATE_SKU" || issue.type === "DUPLICATE_BARCODE") && d.case_or_space_only) {

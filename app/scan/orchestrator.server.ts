@@ -5,6 +5,7 @@ import {
   startBulkOperation,
   readBulkOperation,
   fetchResultStream,
+  pollDelayMs,
   type OperationStatus,
 } from "./bulk-operation.server.js";
 import type { AdminGraphQLExecutor } from "../lib/admin-graphql.server.js";
@@ -37,15 +38,6 @@ import { recordActivityEvent } from "../activity/events.server.js";
  * both re-check the scan status before parsing.
  */
 
-export type ExecutorFactory = (shopId: string) => Promise<{
-  graphql: (query: string, variables?: Record<string, unknown>) => Promise<unknown>;
-}>;
-
-export interface ScanFailInfo {
-  errorCode: string;
-  attempt: number;
-}
-
 const MAX_START_ATTEMPTS = 3;
 
 /** Begin a scan: transition queued → running and start the bulk operation. */
@@ -75,6 +67,21 @@ export async function startScan(
       where: { id: scanId },
       data: { bulkOperationId: op.id },
     });
+    // Polling fallback (spec §scan_pipeline step 3): webhook first, but the
+    // instance may be asleep when it fires, so a poll chain (5 s start,
+    // exponential, 60 s cap) starts now. Whichever wins makes the other a
+    // no-op: parseAndDetect skips terminal scans and pollScan skips
+    // non-running ones.
+    await enqueue(
+      {
+        kind: "scan_poll",
+        payload: { scanId, attempt: 1 },
+        shopId,
+        runAt: new Date(now.getTime() + pollDelayMs(1)),
+        dedupeKey: `scan_poll:${scanId}`,
+      },
+      client,
+    );
     return { started: true, bulkOperationId: op.id };
   } catch (error) {
     const scan = await client.scan.findUnique({ where: { id: scanId } });

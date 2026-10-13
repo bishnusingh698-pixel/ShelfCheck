@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { db } from "../db.server.js";
 import { logger } from "../lib/logger.server.js";
-import { ACTIVITY_EVENT_KINDS, type ActivityEventKind } from "./kinds.js";
+import type { ActivityEventKind } from "./kinds.js";
 
 export { ACTIVITY_EVENT_KINDS, activitySentence } from "./kinds.js";
 export type { ActivityEventKind } from "./kinds.js";

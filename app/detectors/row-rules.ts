@@ -104,7 +104,3 @@ export function rowRules(row: VariantRow, options: DetectorOptions): DetectorRes
   return results;
 }
 
-/** Run row rules over many rows. */
-export function runRowRules(rows: VariantRow[], options: DetectorOptions): DetectorResult[] {
-  return rows.flatMap((row) => rowRules(row, options));
-}
