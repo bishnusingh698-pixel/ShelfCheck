@@ -6,9 +6,7 @@ import { logger } from "../lib/logger.server.js";
  * app/uninstalled (spec <webhooks> "Specific behavior"):
  *  - mark uninstalled,
  *  - delete the access tokens (sessions) immediately,
- *  - cancel pending jobs,
- *  - stop notifications (digest selection and telegram alerts check
- *    uninstalledAt before sending — enforced there, so nothing here races).
+ *  - cancel pending jobs.
  *
  * Catalog data (variant_index, issues, scans) is KEPT until shop/redact
  * (recorded in DECISIONS.md): a reinstall restores history after a fresh scan
@@ -33,9 +31,6 @@ export async function uninstallShop(shopDomain: string, client: PrismaClient = d
   const jobs = await client.job.deleteMany({
     where: { shopId: shop.id, status: "pending" },
   });
-
-  // Telegram link tokens are dead on uninstall (they grant nothing else).
-  await client.telegramLinkToken.deleteMany({ where: { shopId: shop.id } });
 
   const updated = await client.shop.updateMany({
     where: { id: shop.id, uninstalledAt: null },

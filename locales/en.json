@@ -19,7 +19,9 @@
     "issues": "Issues",
     "rules": "Rules",
     "settings": "Settings",
-    "plans": "Plans"
+    "plans": "Plans",
+    "activity": "Activity",
+    "activityBadge": "New"
   },
   "common": {
     "cancel": "Cancel",
@@ -104,7 +106,8 @@
       "previous": "Previous",
       "next": "Next",
       "pageStatus": "Page {page} of {pageCount} ({total} issues)",
-      "actions": "Actions"
+      "actions": "Actions",
+      "newOnlyFilter": "New only"
     }
   },
   "dashboard": {
@@ -158,8 +161,33 @@
       "title": "Set up ShelfCheck",
       "scanRunning": "First scan running",
       "reviewIssues": "Review your issues",
-      "setUpDigest": "Set up the weekly digest",
-      "done": "Done"
+      "done": "Done",
+      "chooseChecks": "Choose which checks to run"
+    },
+    "sinceLastVisit": {
+      "title": "Since your last visit",
+      "newIssues": "{count, plural, =0 {No new issues} one {# new issue} other {# new issues}} since your last visit ({high, plural, =0 {none high} one {# high} other {# high}})",
+      "resolvedIssues": "{count, plural, =0 {No issues resolved} one {# issue resolved} other {# issues resolved}} since your last visit",
+      "scansFinished": "{count, plural, one {# scan finished} other {# scans finished}} since your last visit",
+      "scansFailed": "{count, plural, one {# scan failed} other {# scans failed}} since your last visit",
+      "scoreChange": "Health score changed by {delta} since your last visit",
+      "markSeen": "Mark all as seen",
+      "nothingNew": "Nothing new since your last visit",
+      "seenToast": "Activity marked as seen.",
+      "undo": "Undo"
+    },
+    "needsAttention": {
+      "title": "Needs attention",
+      "view": "View",
+      "openInAdmin": "Open in Shopify admin"
+    },
+    "weeklySummary": {
+      "title": "This week",
+      "newIssues": "{count, plural, =0 {No new issues} one {# new issue} other {# new issues}} this week (last week: {last})",
+      "resolvedIssues": "{count, plural, =0 {No issues resolved} one {# issue resolved} other {# issues resolved}} this week (last week: {last})",
+      "scoreChange": "Health score {direction} {delta} since last week",
+      "improved": "up",
+      "declined": "down"
     }
   },
   "scan": {
@@ -182,28 +210,6 @@
       "acceptNonGtin": "Accept non-GS1 barcodes",
       "acceptNonGtinHelp": "When on, only GS1-length barcodes are checked against the check digit."
     },
-    "digest": {
-      "title": "Weekly email digest",
-      "enabled": "Send me a weekly digest",
-      "email": "Email address",
-      "day": "Day of week",
-      "hour": "Hour of day",
-      "skipWhenEmpty": "Skip when nothing is new",
-      "test": "Send test email",
-      "bounces": "Delivery problems",
-      "none": "None recorded"
-    },
-    "telegram": {
-      "title": "Telegram alerts",
-      "connect": "Connect Telegram",
-      "connectHelp": "Opens Telegram with a one-time link valid for 15 minutes.",
-      "connected": "Connected",
-      "sendTest": "Send test message",
-      "disabled": {
-        "blocked": "The bot was blocked on Telegram. Reconnect to resume alerts.",
-        "other": "Alerts were disabled after a delivery problem."
-      }
-    },
     "autoTag": {
       "title": "Auto-tag",
       "enable": "Tag products with problems",
@@ -214,8 +220,7 @@
     },
     "language": {
       "title": "Language",
-      "interface": "Interface language",
-      "notifications": "Notification language"
+      "interface": "Interface language"
     }
   },
   "rules": {
@@ -237,9 +242,7 @@
   },
   "plans": {
     "title": "Plans",
-    "free": {
-      "name": "Free"
-    },
+    "free": "Free",
     "starter": {
       "name": "Starter"
     },
@@ -252,9 +255,9 @@
     "openManagedPricing": "Manage subscription in Shopify",
     "locked": {
       "watchers": "Webhook watchers are available on Starter and Pro.",
-      "digest": "The weekly email digest is available on Starter and Pro.",
       "autoTag": "Auto-tag is available on Pro.",
-      "telegram": "Telegram alerts are available on Pro."
+      "weeklySummary": "The weekly summary is available on Starter and Pro.",
+      "activityHistory": "Longer activity history is available on paid plans."
     },
     "feature": {
       "scans": "Scheduled scans",
@@ -262,10 +265,11 @@
       "issuesShown": "Issues shown",
       "variantCap": "Variants analyzed",
       "watchers": "Webhook watchers",
-      "digest": "Weekly email digest",
       "csv": "CSV export",
       "autoTag": "Auto-tag",
-      "telegram": "Telegram alerts"
+      "price": "Price",
+      "weeklySummary": "Weekly summary",
+      "activityHistory": "Activity history (days)"
     },
     "unlimited": "Unlimited",
     "yes": "Included",
@@ -291,43 +295,45 @@
     "export": "Export CSV",
     "contentType": "text/csv"
   },
-  "email": {
-    "digest": {
-      "subject": "ShelfCheck weekly digest",
-      "newIssues": "{count, plural, =0 {No new issues this week} one {# new issue this week} other {# new issues this week}}",
-      "stillOpen": "{count, plural, one {# issue is still open} other {# issues are still open}}",
-      "top": "Top new issues",
-      "openApp": "Open ShelfCheck",
-      "unsubscribe": "Unsubscribe",
-      "unsubscribeHelp": "You are receiving this because you enabled the weekly digest in ShelfCheck.",
-      "greeting": "Hello,",
-      "summary": "{newCount}. {openCount}.",
-      "footer": "ShelfCheck"
-    }
-  },
-  "telegramMessage": {
-    "alert": {
-      "header": "ShelfCheck found new problems",
-      "body": "{count, plural, one {# new high-severity issue} other {# new high-severity issues}}",
-      "openApp": "Open ShelfCheck"
-    },
-    "test": {
-      "body": "This is a test message from ShelfCheck. Alerts are working."
-    },
-    "connected": {
-      "body": "ShelfCheck alerts are now connected to this chat."
-    }
-  },
-  "unsubscribe": {
-    "title": "Unsubscribe",
-    "body": "Do you want to stop receiving the weekly ShelfCheck digest?",
-    "confirm": "Unsubscribe",
-    "done": "You are unsubscribed. You can re-enable the digest in Settings.",
-    "invalid": "This link is no longer valid."
-  },
   "errors": {
     "notFound": "Not found",
     "forbidden": "You do not have access to this",
     "generic": "Something went wrong. Please try again."
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No activity in this period yet.",
+    "filter": "Filter by kind",
+    "all": "All activity",
+    "older": "Older events are still stored but hidden beyond your plan's history window.",
+    "upgrade": "Upgrade to see more history",
+    "markSeen": "Mark all as seen",
+    "kind": {
+      "scan_completed": "Scan completed: {opened, plural, =0 {no new issues} one {# new issue} other {# new issues}}, {resolved, plural, =0 {none resolved} one {# resolved} other {# resolved}}; health score {score}",
+      "scan_failed": "Scan failed: {code}",
+      "issues_changed": "Issues changed: {opened, plural, =0 {no new} one {# new} other {# new}}, {resolved, plural, =0 {none resolved} one {# resolved} other {# resolved}}",
+      "group_regrew": "A duplicate group marked as intentional grew: {count, plural, one {# new member} other {# new members}}",
+      "snoozes_reopened": "{count, plural, one {# snoozed issue reopened} other {# snoozed issues reopened}}",
+      "autotag_changed": "{count, plural, one {# product tagged} other {# products tagged}} with shelfcheck-fix",
+      "auto_tag_disabled": "Auto-tag was disabled: the write_products permission was removed",
+      "plan_changed": "Plan changed to {plan}",
+      "over_cap": "{count, plural, one {# variant was} other {# variants were}} beyond your plan and not analyzed"
+    },
+    "filterKind": {
+      "scan_completed": "Scans",
+      "scan_failed": "Scan failures",
+      "issues_changed": "Issue changes",
+      "group_regrew": "Duplicate groups",
+      "snoozes_reopened": "Reopened snoozes",
+      "autotag_changed": "Auto-tag",
+      "auto_tag_disabled": "Auto-tag disabled",
+      "plan_changed": "Plan changes",
+      "over_cap": "Over cap"
+    },
+    "pageStatus": "Page {page} of {pageCount}",
+    "previous": "Previous",
+    "next": "Next",
+    "window": "Showing the last {days} days of activity for your plan.",
+    "olderHidden": "{count, plural, one {# older event is} other {# older events are}} stored but hidden beyond your plan's history window."
   }
 }

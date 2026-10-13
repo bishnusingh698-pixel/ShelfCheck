@@ -51,22 +51,26 @@ function renderPlural(
   template: string,
   params: Record<string, unknown>,
 ): string {
-  // ICU form: "{var, plural, =0{...} one{...} other{...}}" — the arms sit
-  // directly between "plural," and the brace that closes the whole expression.
-  const start = template.search(/\{\w+,\s*plural,\s*/);
-  if (start === -1) return template;
-  const varMatch = /\{(\w+),\s*plural,\s*/.exec(template.slice(start));
-  if (!varMatch) return template;
-  const varName = varMatch[1];
-  const outerEnd = matchBalanced(template, start); // matches the brace at `start`
-  if (outerEnd === -1) return template;
-  const body = template.slice(start + varMatch[0].length, outerEnd - 1);
-  const count = Number(params[varName] ?? 0);
-  const arms = parseArms(body);
-  const arm = arms.get(`=${count}`) ?? arms.get(cldrPluralCategory(locale, count)) ?? arms.get("other") ?? "";
-  // '#' inside the arm renders as the count.
-  const rendered = arm.replace(/#/g, formatCount(locale, count));
-  return template.slice(0, start) + rendered + template.slice(outerEnd);
+  // Render EVERY plural expression in the template, left to right (a
+  // sentence may carry several, e.g. "… (# new, # high)").
+  let out = template;
+  for (let guard = 0; guard < 10; guard++) {
+    const start = out.search(/\{\w+,\s*plural,\s*/);
+    if (start === -1) return out;
+    const varMatch = /\{(\w+),\s*plural,\s*/.exec(out.slice(start));
+    if (!varMatch) return out;
+    const varName = varMatch[1];
+    const outerEnd = matchBalanced(out, start); // matches the brace at `start`
+    if (outerEnd === -1) return out;
+    const body = out.slice(start + varMatch[0].length, outerEnd - 1);
+    const count = Number(params[varName] ?? 0);
+    const arms = parseArms(body);
+    const arm = arms.get(`=${count}`) ?? arms.get(cldrPluralCategory(locale, count)) ?? arms.get("other") ?? "";
+    // '#' inside the arm renders as the count.
+    const rendered = arm.replace(/#/g, formatCount(locale, count));
+    out = out.slice(0, start) + rendered + out.slice(outerEnd);
+  }
+  return out;
 }
 
 function formatCount(locale: string, count: number): string {

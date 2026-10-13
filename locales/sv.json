@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Hitta och åtgärda katalogproblem innan de stoppar en leverans.",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "Logga in",
+    "button": "Logga in",
+    "shopLabel": "Butikens domän",
+    "shopDetails": "exempel.myshopify.com",
+    "error": {
+      "missingShop": "Ange din butiks domän för att logga in",
+      "invalidShop": "Ange en giltig butiksdomän för att logga in"
+    }
+  },
+  "nav": {
+    "dashboard": "Översikt",
+    "issues": "Problem",
+    "rules": "Regler",
+    "settings": "Inställningar",
+    "plans": "Abonnemang",
+    "activity": "Aktivitet",
+    "activityBadge": "Ny"
+  },
+  "common": {
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "retry": "Försök igen",
+    "undo": "Ångra",
+    "close": "Stäng",
+    "copySku": "Kopiera SKU",
+    "copied": "Kopierat till urklipp",
+    "openInAdmin": "Öppna i Shopifys admin",
+    "loading": "Laddar…",
+    "errorTitle": "Något gick fel",
+    "errorBody": "Den senaste åtgärden kunde inte slutföras. Du kan försöka igen.",
+    "empty": "Inget här ännu"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "Saknad SKU",
+      "DUPLICATE_SKU": "Duplicerad SKU",
+      "MISSING_BARCODE": "Saknad streckkod",
+      "DUPLICATE_BARCODE": "Duplicerad streckkod",
+      "INVALID_BARCODE": "Ogiltig streckkod",
+      "PUBLISHED_ZERO_INVENTORY": "Publicerad utan lager",
+      "VARIANT_MISSING_IMAGE": "Varianten saknar bild",
+      "MISSING_WEIGHT": "Saknad vikt",
+      "MISSING_COST": "Saknad kostnad",
+      "COMPARE_AT_INVALID": "Ogiltigt jämförpris",
+      "ZERO_PRICE": "Pris på noll"
+    },
+    "severity": {
+      "high": "Hög",
+      "medium": "Medel",
+      "low": "Låg"
+    },
+    "status": {
+      "open": "Öppen",
+      "snoozed": "Skjuten upp",
+      "ignored": "Ignorerad",
+      "intentional": "Avsiktlig",
+      "resolved": "Löst"
+    },
+    "hint": {
+      "scientific_notation": "Ser ut som vetenskaplig notation (en CSV-export kan ha skadat den här streckkoden)",
+      "likely_dropped_leading_zero": "Ett värde med 11 siffror; en inledande nolla kan ha tappats",
+      "inner_whitespace": "Innehåller blanksteg inuti värdet"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "Jämförpriset är lägre än priset",
+      "COMPARE_AT_INVALID_equal": "Jämförpriset är samma som priset",
+      "case_or_space_only": "Dessa SKU:n skiljer sig bara i versaler eller blanksteg",
+      "group_grew": "En ny variant har lagts till i den här gruppen"
+    },
+    "actions": {
+      "snooze": "Skjut upp",
+      "ignore": "Ignorera",
+      "intentional": "Markera som avsiktlig",
+      "resolve": "Markera som löst",
+      "unsnooze": "Återaktivera"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 dagar} =30 {30 dagar} =90 {90 dagar} other {{count} dagar}}",
+      "banner": "Skjuten upp till {date}. Den öppnas igen automatiskt."
+    },
+    "list": {
+      "title": "Problem",
+      "empty": "Inga problem matchar de aktuella filtren. Din katalog ser bra ut.",
+      "filterType": "Problemtyp",
+      "filterSeverity": "Allvarlighetsgrad",
+      "filterStatus": "Status",
+      "filterVendor": "Leverantör",
+      "search": "Sök på SKU eller produkttitel",
+      "sortBy": "Sortera efter",
+      "sortSeverity": "Allvarlighetsgrad",
+      "sortFirstSeen": "Först upptäckt",
+      "bulkSnooze": "Skjut upp valda",
+      "bulkIgnore": "Ignorera valda",
+      "bulkIntentional": "Markera valda som avsiktliga",
+      "selected": "{count, plural, =0 {Inga problem valda} one {# problem valt} other {# problem valda}}",
+      "newBadge": "Ny",
+      "groupMembers": "Alla medlemmar i den här gruppen",
+      "overCapHidden": "{count, plural, one {# problem ligger utanför visningsgränsen för ditt abonnemang} other {# problem ligger utanför visningsgränsen för ditt abonnemang}}",
+      "previous": "Föregående",
+      "next": "Nästa",
+      "pageStatus": "Sida {page} av {pageCount} ({total} problem)",
+      "actions": "Åtgärder",
+      "newOnlyFilter": "Endast nya"
+    }
+  },
+  "dashboard": {
+    "title": "Kataloghälsa",
+    "healthScore": "Hälsopoäng",
+    "band": {
+      "excellent": "Utmärkt",
+      "good": "Bra",
+      "needs_attention": "Behöver åtgärdas",
+      "critical": "Kritisk"
+    },
+    "counts": {
+      "title": "Problem per allvarlighetsgrad",
+      "high": "{count, plural, one {# problem med hög allvarlighetsgrad} other {# problem med hög allvarlighetsgrad}}",
+      "medium": "{count, plural, one {# problem med medel allvarlighetsgrad} other {# problem med medel allvarlighetsgrad}}",
+      "low": "{count, plural, one {# problem med låg allvarlighetsgrad} other {# problem med låg allvarlighetsgrad}}",
+      "byType": "Problem per typ"
+    },
+    "scan": {
+      "title": "Senaste genomsökning",
+      "status": {
+        "queued": "I kö",
+        "running": "Skannar…",
+        "parsing": "Läser resultat…",
+        "completed": "Slutförd",
+        "failed": "Misslyckades",
+        "canceled": "Avbruten"
+      },
+      "runNow": "Skanna nu",
+      "lastScanAt": "Senast skannad {time}",
+      "never": "Aldrig skannad",
+      "cooldown": "Du kan skanna igen om {minutes} minuter",
+      "failedBody": "Den senaste genomsökningen kunde inte slutföras. Du kan försöka igen.",
+      "variants": "{count, plural, one {# variant analyserad} other {# varianter analyserade}}"
+    },
+    "usage": {
+      "title": "Abonnemningsanvändning",
+      "variants": "{analyzed} av {cap} varianter analyserade",
+      "overCap": "{count, plural, one {# variant låg utanför ditt abonnemang och analyserades inte} other {# varianter låg utanför ditt abonnemang och analyserades inte}}",
+      "overCapNote": "Dubbletter som involverar dem kan ha missats.",
+      "upgrade": "Uppgradera"
+    },
+    "trend": {
+      "title": "Nya vs. lösta",
+      "last8": "Senaste 8 genomsökningarna",
+      "new": "Nya",
+      "resolved": "Lösta",
+      "scan": "Genomsökning {n}"
+    },
+    "onboarding": {
+      "title": "Konfigurera ShelfCheck",
+      "scanRunning": "Första genomsökningen pågår",
+      "reviewIssues": "Granska dina problem",
+      "done": "Klar",
+      "chooseChecks": "Välj vilka kontroller som ska köras"
+    },
+    "sinceLastVisit": {
+      "title": "Sedan ditt senaste besök",
+      "newIssues": "{count, plural, =0 {Inga nya problem} one {# nytt problem} other {# nya problem}} sedan ditt senaste besök ({high, plural, =0 {inga med hög allvarlighetsgrad} one {# med hög allvarlighetsgrad} other {# med hög allvarlighetsgrad}})",
+      "resolvedIssues": "{count, plural, =0 {Inga problem lösta} one {# problem löst} other {# problem lösta}} sedan ditt senaste besök",
+      "scansFinished": "{count, plural, one {# genomsökning slutförd} other {# genomsökningar slutförda}} sedan ditt senaste besök",
+      "scansFailed": "{count, plural, one {# genomsökning misslyckades} other {# genomsökningar misslyckades}} sedan ditt senaste besök",
+      "scoreChange": "Hälsopoängen har förändrats med {delta} sedan ditt senaste besök",
+      "markSeen": "Markera allt som sett",
+      "nothingNew": "Inget nytt sedan ditt senaste besök",
+      "seenToast": "Aktivitet markerad som sedd.",
+      "undo": "Ångra"
+    },
+    "needsAttention": {
+      "title": "Behöver åtgärdas",
+      "view": "Visa",
+      "openInAdmin": "Öppna i Shopifys admin"
+    },
+    "weeklySummary": {
+      "title": "Denna vecka",
+      "newIssues": "{count, plural, =0 {Inga nya problem} one {# nytt problem} other {# nya problem}} denna vecka (förra veckan: {last})",
+      "resolvedIssues": "{count, plural, =0 {Inga problem lösta} one {# problem löst} other {# problem lösta}} denna vecka (förra veckan: {last})",
+      "scoreChange": "Hälsopoängen har {direction} {delta} sedan förra veckan",
+      "improved": "stigit med",
+      "declined": "sjunkit med"
+    }
+  },
+  "scan": {
+    "started": "Genomsökning startad. Det tar vanligtvis några minuter.",
+    "denied": {
+      "free": "Ditt abonnemang omfattar en genomsökning per månad. Uppgradera för att skanna oftare.",
+      "dailyLimit": "Du har nått dagens gräns för genomsökningar för ditt abonnemang.",
+      "cooldown": "En genomsökning har precis körts. Vänta innan du startar en ny.",
+      "active": "En genomsökning pågår redan."
+    }
+  },
+  "settings": {
+    "title": "Inställningar",
+    "issueTypes": "Problemtyper",
+    "issueTypesHelp": "Stäng av alla kontroller som du inte vill se.",
+    "catalog": {
+      "title": "Katalogomfattning",
+      "includeDraft": "Inkludera utkast",
+      "includeArchived": "Inkludera arkiverade produkter",
+      "acceptNonGtin": "Godkänd icke-GS1-streckkoder",
+      "acceptNonGtinHelp": "När detta är på kontrollas bara streckkoder med GS1-längd mot kontrollsiffran."
+    },
+    "autoTag": {
+      "title": "Automatisk taggning",
+      "enable": "Tagga produkter med problem",
+      "help": "Lägger till taggen \"shelfcheck-fix\" på produkter med öppna problem. Kräver behörigheten write_products, som du kan bevilja här.",
+      "requestScope": "Bevilja behörighet",
+      "granted": "Behörighet beviljad",
+      "denied": "Automatisk taggning kräver behörigheten write_products."
+    },
+    "language": {
+      "title": "Språk",
+      "interface": "Gränssnittsspråk"
+    }
+  },
+  "rules": {
+    "title": "Ignoreringsregler",
+    "empty": "Inga ignoreringsregler ännu. Regler håller matchande problem borta från din lista.",
+    "scope": {
+      "sku": "SKU",
+      "variant": "Variant",
+      "product": "Produkt",
+      "vendor": "Leverantör"
+    },
+    "value": "Värde",
+    "issueType": "Problemtyp (valfritt)",
+    "issueTypeAny": "Alla typer",
+    "note": "Anteckning (valfri)",
+    "add": "Lägg till regel",
+    "delete": "Ta bort",
+    "scopeLabel": "Regelns omfattning"
+  },
+  "plans": {
+    "title": "Abonnemang",
+    "free": "Gratis",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Jämför abonnemang",
+    "current": "Nuvarande abonnemang",
+    "upgrade": "Se abonnemang och uppgradera",
+    "openManagedPricing": "Hantera prenumeration i Shopify",
+    "locked": {
+      "watchers": "Webhook-övervakare finns i Starter och Pro.",
+      "autoTag": "Automatisk taggning finns i Pro.",
+      "weeklySummary": "Veckosammanfattningen finns i Starter och Pro.",
+      "activityHistory": "Längre aktivitetshistorik finns i betalda abonnemang."
+    },
+    "feature": {
+      "scans": "Schemalagda genomsökningar",
+      "manualScans": "Manuella genomsökningar per dag",
+      "issuesShown": "Visade problem",
+      "variantCap": "Analyserade varianter",
+      "watchers": "Webhook-övervakare",
+      "csv": "CSV-export",
+      "autoTag": "Automatisk taggning",
+      "price": "Pris",
+      "weeklySummary": "Veckosammanfattning",
+      "activityHistory": "Aktivitetshistorik (dagar)"
+    },
+    "unlimited": "Obegränsat",
+    "yes": "Ingår",
+    "no": "Ingår inte",
+    "scheduled": {
+      "monthly": "Månatlig",
+      "weekly": "Veckovis",
+      "daily": "Daglig"
+    }
+  },
+  "toast": {
+    "saved": "Inställningar sparade",
+    "snoozed": "Problem uppskjutet",
+    "ignored": "Problem ignorerat",
+    "intentional": "Markerat som avsiktligt",
+    "resolved": "Markerat som löst",
+    "scanStarted": "Genomsökning startad",
+    "ruleAdded": "Regel tillagd",
+    "ruleDeleted": "Regel borttagen",
+    "undone": "Ångrad"
+  },
+  "csv": {
+    "export": "Exportera CSV",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "Hittades inte",
+    "forbidden": "Du har inte åtkomst till det här",
+    "generic": "Något gick fel. Försök igen."
+  },
+  "activity": {
+    "title": "Aktivitet",
+    "empty": "Ingen aktivitet under den här perioden ännu.",
+    "filter": "Filtrera efter typ",
+    "all": "All aktivitet",
+    "older": "Äldre händelser lagras fortfarande men döljs bortom ditt abonnemangs historikfönster.",
+    "upgrade": "Uppgradera för att se mer historik",
+    "markSeen": "Markera allt som sett",
+    "kind": {
+      "scan_completed": "Genomsökning slutförd: {opened, plural, =0 {inga nya problem} one {# nytt problem} other {# nya problem}}, {resolved, plural, =0 {inga lösta} one {# löst} other {# lösta}}; hälsopoäng {score}",
+      "scan_failed": "Genomsökning misslyckades: {code}",
+      "issues_changed": "Problem ändrade: {opened, plural, =0 {inga nya} one {# nytt} other {# nya}}, {resolved, plural, =0 {inga lösta} one {# löst} other {# lösta}}",
+      "group_regrew": "En grupp dubbletter markerad som avsiktlig har vuxit: {count, plural, one {# ny medlem} other {# nya medlemmar}}",
+      "snoozes_reopened": "{count, plural, one {# uppskjutet problem öppnades igen} other {# uppskjutna problem öppnades igen}}",
+      "autotag_changed": "{count, plural, one {# produkt taggad} other {# produkter taggade}} med shelfcheck-fix",
+      "auto_tag_disabled": "Automatisk taggning inaktiverades: behörigheten write_products togs bort",
+      "plan_changed": "Abonnemang ändrat till {plan}",
+      "over_cap": "{count, plural, one {# variant låg} other {# varianter låg}} utanför ditt abonnemang och analyserades inte"
+    },
+    "filterKind": {
+      "scan_completed": "Genomsökningar",
+      "scan_failed": "Misslyckade genomsökningar",
+      "issues_changed": "Problemändringar",
+      "group_regrew": "Dubblettgrupper",
+      "snoozes_reopened": "Återöppnade problem",
+      "autotag_changed": "Automatisk taggning",
+      "auto_tag_disabled": "Taggning inaktiverad",
+      "plan_changed": "Abonnemangsändringar",
+      "over_cap": "Utanför abonnemanget"
+    },
+    "pageStatus": "Sida {page} av {pageCount}",
+    "previous": "Föregående",
+    "next": "Nästa",
+    "window": "Visar de senaste {days} dagarnas aktivitet för ditt abonnemang.",
+    "olderHidden": "{count, plural, one {# äldre händelse är} other {# äldre händelser är}} lagrade men dolda bortom ditt abonnemangs historikfönster."
+  }
+}

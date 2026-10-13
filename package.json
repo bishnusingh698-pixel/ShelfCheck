@@ -29,8 +29,9 @@
     "fixtures:generate": "tsx scripts/gen-fixtures.ts",
     "seed:dev-store": "tsx scripts/seed-dev-store.ts",
     "secrets:check": "tsx scripts/secrets-check.ts",
+    "dead:check": "tsx scripts/dead-code-check.ts",
     "verify:api": "tsx scripts/verify-api.ts",
-    "verify": "npm run i18n:pseudo && npm run i18n:check && npm run typecheck && npm run lint && npm run fixtures:generate && npm run test && npm run test:integration && npm run secrets:check"
+    "verify": "npm run i18n:pseudo && npm run i18n:check && npm run typecheck && npm run lint && npm run dead:check && npm run fixtures:generate && npm run test && npm run test:integration && npm run secrets:check && npm run test:e2e"
   },
   "type": "module",
   "engines": {

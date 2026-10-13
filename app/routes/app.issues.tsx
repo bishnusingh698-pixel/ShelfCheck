@@ -85,7 +85,12 @@ const TOAST_BY_INTENT: Record<string, string> = {
 export async function loader({ request }: LoaderFunctionArgs) {
   const shop = await requireAdminShopContext(request);
   const filters = parseIssueFilters(new URL(request.url));
-  const list = await queryIssueList(db, { shopId: shop.id, plan: shop.plan, filters });
+  const list = await queryIssueList(db, {
+    shopId: shop.id,
+    plan: shop.plan,
+    filters,
+    activitySeenAt: shop.activitySeenAt,
+  });
 
   // Echo the clamped page so the pager stays in sync with what was served.
   return { list, filters: { ...filters, page: list.page }, pageSize: ISSUE_PAGE_SIZE };
@@ -177,6 +182,7 @@ export default function IssuesRoute() {
       vendor: filters.vendor,
       q: filters.q,
       sort: filters.sort,
+      newOnly: filters.newOnly ? "1" : undefined,
       ...patch,
     };
     for (const [k, v] of Object.entries(all)) if (v) params.set(k, v);
@@ -264,6 +270,14 @@ export default function IssuesRoute() {
               <option value="severity">{t("issue.list.sortSeverity")}</option>
               <option value="firstSeen">{t("issue.list.sortFirstSeen")}</option>
             </select>
+            <label htmlFor="issue-new-only">{t("issue.list.newOnlyFilter")}</label>
+            <input
+              id="issue-new-only"
+              name="newOnly"
+              type="checkbox"
+              value="1"
+              defaultChecked={filters.newOnly}
+            />
             <input type="hidden" name="page" value="1" />
             <s-button type="submit">{t("common.save")}</s-button>
           </s-stack>

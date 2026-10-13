@@ -26,9 +26,6 @@ export function defaultEnabledTypes(): Set<IssueType> {
   return new Set(ALL_ISSUE_TYPES.filter((t) => ISSUE_REGISTRY[t].defaultEnabled));
 }
 
-export function severityOf(type: IssueType): Severity {
-  return ISSUE_REGISTRY[type].severity;
-}
 
 /**
  * Parse DetectorOptions from the shop settings jsonb. Missing keys fall back

@@ -28,5 +28,3 @@ export function resolveLocale(input: string | null | undefined): SupportedLocale
   return "en";
 }
 
-/** All locales that must exist on disk (source + translated; en-XA generated). */
-export const BUILD_LOCALES = [...SUPPORTED_LOCALES];

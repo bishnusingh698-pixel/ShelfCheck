@@ -37,26 +37,6 @@ export async function rateLimit(
   };
 }
 
-/** Check without consuming (used to display state, not to guard). */
-export async function rateLimitPeek(
-  key: string,
-  limit: number,
-  windowMs: number,
-  now = new Date(),
-): Promise<RateLimitResult> {
-  const windowStart = new Date(Math.floor(now.getTime() / windowMs) * windowMs);
-  const rows = await db.$queryRaw<Array<{ count: number }>>`
-    SELECT "count" FROM "RateLimitBucket"
-    WHERE "key" = ${key} AND "windowStart" = ${windowStart}
-  `;
-  const count = rows[0]?.count ?? 0;
-  return {
-    allowed: count < limit,
-    remaining: Math.max(0, limit - count),
-    windowStart,
-  };
-}
-
 /** Best-effort cleanup of old buckets (called from tick). */
 export async function pruneRateLimitBuckets(
   olderThan: Date,

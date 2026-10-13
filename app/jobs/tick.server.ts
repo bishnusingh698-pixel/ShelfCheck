@@ -5,8 +5,8 @@ import { reclaimStuckJobs, drainJobs, type JobHandler } from "./queue.server.js"
 import { runDueScheduledScans } from "./scheduler.server.js";
 import { runWatchdog } from "./watchdog.server.js";
 import { reopenExpiredSnoozes } from "../issues/snooze.server.js";
-import { sendDueDigests } from "../notifications/digest.server.js";
 import { pruneRateLimitBuckets } from "../lib/rate-limit.server.js";
+import { purgeOldActivityEvents } from "../activity/events.server.js";
 
 /**
  * The idempotent tick sequence. Safe to call concurrently and repeatedly:
@@ -15,12 +15,12 @@ import { pruneRateLimitBuckets } from "../lib/rate-limit.server.js";
  */
 export interface TickResult {
   scansStarted: number;
-  digestsSent: number;
   snoozesReopened: number;
   scansFailed: number;
   jobsReclaimed: number;
   jobsRan: number;
   bucketsPruned: number;
+  activityEventsPurged: number;
 }
 
 export interface TickOptions {
@@ -35,7 +35,6 @@ export async function tick(options: TickOptions): Promise<TickResult> {
   const { logger, handler, now = new Date(), client = db, maxDrainMs = 5000 } = options;
 
   const scansStarted = await runDueScheduledScans(now, client, logger);
-  const digestsSent = await sendDueDigests(now, client, logger);
   const snoozesReopened = await reopenExpiredSnoozes(now, client);
   const scansFailed = await runWatchdog(now, client, logger);
   const jobsReclaimed = await reclaimStuckJobs(new Date(now.getTime() - 10 * 60_000), client);
@@ -46,14 +45,18 @@ export async function tick(options: TickOptions): Promise<TickResult> {
 
   const bucketsPruned = await pruneRateLimitBuckets(new Date(now.getTime() - 24 * 60 * 60_000), client);
 
+  // In-app activity: purge the 90-day horizon. Snooze reopens are recorded
+  // per shop by reopenExpiredSnoozes itself (it knows the per-shop counts).
+  const activityEventsPurged = await purgeOldActivityEvents(now, client);
+
   const result: TickResult = {
     scansStarted,
-    digestsSent,
     snoozesReopened,
     scansFailed,
     jobsReclaimed,
     jobsRan,
     bucketsPruned,
+    activityEventsPurged,
   };
   logger.info(result, "tick complete");
   return result;

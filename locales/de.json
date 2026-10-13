@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "Finden und beheben Sie Katalogprobleme, bevor sie eine Lieferung stoppen.",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "Anmelden",
+    "button": "Anmelden",
+    "shopLabel": "Shop-Domain",
+    "shopDetails": "beispiel.myshopify.com",
+    "error": {
+      "missingShop": "Bitte geben Sie Ihre Shop-Domain ein, um sich anzumelden",
+      "invalidShop": "Bitte geben Sie eine gültige Shop-Domain ein, um sich anzumelden"
+    }
+  },
+  "nav": {
+    "dashboard": "Übersicht",
+    "issues": "Probleme",
+    "rules": "Regeln",
+    "settings": "Einstellungen",
+    "plans": "Tarife",
+    "activity": "Aktivität",
+    "activityBadge": "Neu"
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "retry": "Erneut versuchen",
+    "undo": "Rückgängig machen",
+    "close": "Schließen",
+    "copySku": "SKU kopieren",
+    "copied": "In die Zwischenablage kopiert",
+    "openInAdmin": "Im Shopify-Adminbereich öffnen",
+    "loading": "Wird geladen…",
+    "errorTitle": "Etwas ist schiefgelaufen",
+    "errorBody": "Die letzte Aktion konnte nicht abgeschlossen werden. Sie können es erneut versuchen.",
+    "empty": "Hier gibt es noch nichts"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "Fehlende SKU",
+      "DUPLICATE_SKU": "Doppelte SKU",
+      "MISSING_BARCODE": "Fehlender Barcode",
+      "DUPLICATE_BARCODE": "Doppelter Barcode",
+      "INVALID_BARCODE": "Ungültiger Barcode",
+      "PUBLISHED_ZERO_INVENTORY": "Veröffentlicht ohne Inventar",
+      "VARIANT_MISSING_IMAGE": "Variante ohne Bild",
+      "MISSING_WEIGHT": "Fehlendes Gewicht",
+      "MISSING_COST": "Fehlende Kosten",
+      "COMPARE_AT_INVALID": "Ungültiger Vergleichspreis",
+      "ZERO_PRICE": "Preis von null"
+    },
+    "severity": {
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    },
+    "status": {
+      "open": "Offen",
+      "snoozed": "Zurückgestellt",
+      "ignored": "Ignoriert",
+      "intentional": "Absichtlich",
+      "resolved": "Behoben"
+    },
+    "hint": {
+      "scientific_notation": "Sieht nach wissenschaftlicher Notation aus (ein CSV-Export könnte diesen Barcode beschädigt haben)",
+      "likely_dropped_leading_zero": "Ein 11-stelliger Wert; eine führende Null könnte verloren gegangen sein",
+      "inner_whitespace": "Enthält Leerzeichen innerhalb des Wertes"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "Der Vergleichspreis ist niedriger als der Preis",
+      "COMPARE_AT_INVALID_equal": "Der Vergleichspreis entspricht dem Preis",
+      "case_or_space_only": "Diese SKUs unterscheiden sich nur in Groß-/Kleinschreibung oder Leerzeichen",
+      "group_grew": "Eine neue Variante ist zu dieser Gruppe hinzugekommen"
+    },
+    "actions": {
+      "snooze": "Zurückstellen",
+      "ignore": "Ignorieren",
+      "intentional": "Als absichtlich markieren",
+      "resolve": "Als behoben markieren",
+      "unsnooze": "Wieder anzeigen"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7 Tage} =30 {30 Tage} =90 {90 Tage} other {{count} Tage}}",
+      "banner": "Zurückgestellt bis {date}. Es wird automatisch wieder angezeigt."
+    },
+    "list": {
+      "title": "Probleme",
+      "empty": "Keine Probleme entsprechen den aktuellen Filtern. Ihr Katalog sieht gut aus.",
+      "filterType": "Problemtyp",
+      "filterSeverity": "Schweregrad",
+      "filterStatus": "Status",
+      "filterVendor": "Anbieter",
+      "search": "Nach SKU oder Produkttitel suchen",
+      "sortBy": "Sortieren nach",
+      "sortSeverity": "Schweregrad",
+      "sortFirstSeen": "Zuerst erkannt",
+      "bulkSnooze": "Auswahl zurückstellen",
+      "bulkIgnore": "Auswahl ignorieren",
+      "bulkIntentional": "Auswahl als absichtlich markieren",
+      "selected": "{count, plural, =0 {Kein Problem ausgewählt} one {# Problem ausgewählt} other {# Probleme ausgewählt}}",
+      "newBadge": "Neu",
+      "groupMembers": "Alle Mitglieder dieser Gruppe",
+      "overCapHidden": "{count, plural, one {# Problem liegt über der Anzeigegrenze Ihres Tarifs} other {# Probleme liegen über der Anzeigegrenze Ihres Tarifs}}",
+      "previous": "Zurück",
+      "next": "Weiter",
+      "pageStatus": "Seite {page} von {pageCount} ({total} Probleme)",
+      "actions": "Aktionen",
+      "newOnlyFilter": "Nur neue"
+    }
+  },
+  "dashboard": {
+    "title": "Katalogqualität",
+    "healthScore": "Health-Score",
+    "band": {
+      "excellent": "Ausgezeichnet",
+      "good": "Gut",
+      "needs_attention": "Verbesserungsbedürftig",
+      "critical": "Kritisch"
+    },
+    "counts": {
+      "title": "Probleme nach Schweregrad",
+      "high": "{count, plural, one {# Problem mit hohem Schweregrad} other {# Probleme mit hohem Schweregrad}}",
+      "medium": "{count, plural, one {# Problem mit mittlerem Schweregrad} other {# Probleme mit mittlerem Schweregrad}}",
+      "low": "{count, plural, one {# Problem mit niedrigem Schweregrad} other {# Probleme mit niedrigem Schweregrad}}",
+      "byType": "Probleme nach Typ"
+    },
+    "scan": {
+      "title": "Letzter Scan",
+      "status": {
+        "queued": "In Warteschlange",
+        "running": "Wird gescannt…",
+        "parsing": "Ergebnisse werden gelesen…",
+        "completed": "Abgeschlossen",
+        "failed": "Fehlgeschlagen",
+        "canceled": "Abgebrochen"
+      },
+      "runNow": "Jetzt scannen",
+      "lastScanAt": "Zuletzt gescannt {time}",
+      "never": "Nie gescannt",
+      "cooldown": "Sie können in {minutes} Minuten erneut scannen",
+      "failedBody": "Der letzte Scan konnte nicht abgeschlossen werden. Sie können ihn erneut versuchen.",
+      "variants": "{count, plural, one {# Variante analysiert} other {# Varianten analysiert}}"
+    },
+    "usage": {
+      "title": "Tarif-Nutzung",
+      "variants": "{analyzed} von {cap} Varianten analysiert",
+      "overCap": "{count, plural, one {# Variante lag über Ihrem Tarif und wurde nicht analysiert} other {# Varianten lagen über Ihrem Tarif und wurden nicht analysiert}}",
+      "overCapNote": "Duplikate mit diesen Varianten könnten übersehen werden.",
+      "upgrade": "Upgrade"
+    },
+    "trend": {
+      "title": "Neu vs. behoben",
+      "last8": "Letzte 8 Scans",
+      "new": "Neu",
+      "resolved": "Behoben",
+      "scan": "Scan {n}"
+    },
+    "onboarding": {
+      "title": "ShelfCheck einrichten",
+      "scanRunning": "Erster Scan läuft",
+      "reviewIssues": "Probleme prüfen",
+      "done": "Fertig",
+      "chooseChecks": "Wählen Sie die durchzuführenden Prüfungen"
+    },
+    "sinceLastVisit": {
+      "title": "Seit Ihrem letzten Besuch",
+      "newIssues": "{count, plural, =0 {Keine neuen Probleme} one {# neues Problem} other {# neue Probleme}} seit Ihrem letzten Besuch ({high, plural, =0 {keine mit hohem Schweregrad} one {# mit hohem Schweregrad} other {# mit hohem Schweregrad}})",
+      "resolvedIssues": "{count, plural, =0 {Keine Probleme behoben} one {# Problem behoben} other {# Probleme behoben}} seit Ihrem letzten Besuch",
+      "scansFinished": "{count, plural, one {# Scan abgeschlossen} other {# Scans abgeschlossen}} seit Ihrem letzten Besuch",
+      "scansFailed": "{count, plural, one {# Scan fehlgeschlagen} other {# Scans fehlgeschlagen}} seit Ihrem letzten Besuch",
+      "scoreChange": "Health-Score hat sich seit Ihrem letzten Besuch um {delta} geändert",
+      "markSeen": "Alles als gesehen markieren",
+      "nothingNew": "Nichts Neues seit Ihrem letzten Besuch",
+      "seenToast": "Aktivität als gesehen markiert.",
+      "undo": "Rückgängig machen"
+    },
+    "needsAttention": {
+      "title": "Verbesserungsbedürftig",
+      "view": "Ansehen",
+      "openInAdmin": "Im Shopify-Adminbereich öffnen"
+    },
+    "weeklySummary": {
+      "title": "Diese Woche",
+      "newIssues": "{count, plural, =0 {Keine neuen Probleme} one {# neues Problem} other {# neue Probleme}} diese Woche (letzte Woche: {last})",
+      "resolvedIssues": "{count, plural, =0 {Keine Probleme behoben} one {# Problem behoben} other {# Probleme behoben}} diese Woche (letzte Woche: {last})",
+      "scoreChange": "Health-Score seit letzter Woche {direction} {delta}",
+      "improved": "gestiegen um",
+      "declined": "gesunken um"
+    }
+  },
+  "scan": {
+    "started": "Scan gestartet. Das dauert in der Regel einige Minuten.",
+    "denied": {
+      "free": "Ihr Tarif enthält einen Scan pro Monat. Upgrade für häufigere Scans.",
+      "dailyLimit": "Sie haben das heutige Scan-Limit Ihres Tarifs erreicht.",
+      "cooldown": "Ein Scan wurde gerade gestartet. Bitte warten Sie, bevor Sie einen neuen starten.",
+      "active": "Es läuft bereits ein Scan."
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "issueTypes": "Problemtypen",
+    "issueTypesHelp": "Deaktivieren Sie jede Prüfung, die Sie nicht sehen möchten.",
+    "catalog": {
+      "title": "Katalogumfang",
+      "includeDraft": "Entwürfe einbeziehen",
+      "includeArchived": "Archivierte Produkte einbeziehen",
+      "acceptNonGtin": "Nicht-GS1-Barcodes akzeptieren",
+      "acceptNonGtinHelp": "Bei Aktivierung werden nur Barcodes mit GS1-Länge anhand der Prüfziffer geprüft."
+    },
+    "autoTag": {
+      "title": "Auto-Tagging",
+      "enable": "Produkte mit Problemen taggen",
+      "help": "Fügt Produkten mit offenen Problemen das Tag „shelfcheck-fix“ hinzu. Erfordert die Berechtigung write_products, die Sie hier erteilen können.",
+      "requestScope": "Berechtigung erteilen",
+      "granted": "Berechtigung erteilt",
+      "denied": "Auto-Tagging benötigt die Berechtigung write_products."
+    },
+    "language": {
+      "title": "Sprache",
+      "interface": "Sprache der Benutzeroberfläche"
+    }
+  },
+  "rules": {
+    "title": "Ignorierregeln",
+    "empty": "Noch keine Ignorierregeln. Regeln halten passende Probleme aus Ihrer Liste.",
+    "scope": {
+      "sku": "SKU",
+      "variant": "Variante",
+      "product": "Produkt",
+      "vendor": "Anbieter"
+    },
+    "value": "Wert",
+    "issueType": "Problemtyp (optional)",
+    "issueTypeAny": "Beliebiger Typ",
+    "note": "Notiz (optional)",
+    "add": "Regel hinzufügen",
+    "delete": "Löschen",
+    "scopeLabel": "Regelbereich"
+  },
+  "plans": {
+    "title": "Tarife",
+    "free": "Kostenlos",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "Tarife vergleichen",
+    "current": "Aktueller Tarif",
+    "upgrade": "Tarife ansehen und upgraden",
+    "openManagedPricing": "Abonnement in Shopify verwalten",
+    "locked": {
+      "watchers": "Webhook-Watcher sind in Starter und Pro verfügbar.",
+      "autoTag": "Auto-Tagging ist in Pro verfügbar.",
+      "weeklySummary": "Die Wochenübersicht ist in Starter und Pro verfügbar.",
+      "activityHistory": "Ein längere Aktivitätsübersicht ist in kostenpflichtigen Tarifen verfügbar."
+    },
+    "feature": {
+      "scans": "Geplante Scans",
+      "manualScans": "Manuelle Scans pro Tag",
+      "issuesShown": "Angezeigte Probleme",
+      "variantCap": "Analysierte Varianten",
+      "watchers": "Webhook-Watcher",
+      "csv": "CSV-Export",
+      "autoTag": "Auto-Tagging",
+      "price": "Preis",
+      "weeklySummary": "Wochenübersicht",
+      "activityHistory": "Aktivitätsverlauf (Tage)"
+    },
+    "unlimited": "Unbegrenzt",
+    "yes": "Enthalten",
+    "no": "Nicht enthalten",
+    "scheduled": {
+      "monthly": "Monatlich",
+      "weekly": "Wöchentlich",
+      "daily": "Täglich"
+    }
+  },
+  "toast": {
+    "saved": "Einstellungen gespeichert",
+    "snoozed": "Problem zurückgestellt",
+    "ignored": "Problem ignoriert",
+    "intentional": "Als absichtlich markiert",
+    "resolved": "Als behoben markiert",
+    "scanStarted": "Scan gestartet",
+    "ruleAdded": "Regel hinzugefügt",
+    "ruleDeleted": "Regel gelöscht",
+    "undone": "Rückgängig gemacht"
+  },
+  "csv": {
+    "export": "CSV exportieren",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "Nicht gefunden",
+    "forbidden": "Sie haben keinen Zugriff darauf",
+    "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "activity": {
+    "title": "Aktivität",
+    "empty": "Noch keine Aktivität in diesem Zeitraum.",
+    "filter": "Nach Art filtern",
+    "all": "Alle Aktivitäten",
+    "older": "Ältere Ereignisse werden weiterhin gespeichert, sind aber über das Übersichtsfenster Ihres Tarifs hinaus ausgeblendet.",
+    "upgrade": "Upgrade für mehr Verlauf",
+    "markSeen": "Alles als gesehen markieren",
+    "kind": {
+      "scan_completed": "Scan abgeschlossen: {opened, plural, =0 {keine neuen Probleme} one {# neues Problem} other {# neue Probleme}}, {resolved, plural, =0 {keins behoben} one {# behoben} other {# behoben}}; Health-Score {score}",
+      "scan_failed": "Scan fehlgeschlagen: {code}",
+      "issues_changed": "Probleme geändert: {opened, plural, =0 {keine neuen} one {# neu} other {# neu}}, {resolved, plural, =0 {keins behoben} one {# behoben} other {# behoben}}",
+      "group_regrew": "Eine als absichtlich markierte Duplikatgruppe ist gewachsen: {count, plural, one {# neues Mitglied} other {# neue Mitglieder}}",
+      "snoozes_reopened": "{count, plural, one {# zurückgestelltes Problem wieder angezeigt} other {# zurückgestellte Probleme wieder angezeigt}}",
+      "autotag_changed": "{count, plural, one {# Produkt} other {# Produkte}} mit shelfcheck-fix getaggt",
+      "auto_tag_disabled": "Auto-Tagging wurde deaktiviert: die Berechtigung write_products wurde entfernt",
+      "plan_changed": "Tarif geändert zu {plan}",
+      "over_cap": "{count, plural, one {# Variante lag} other {# Varianten lagen}} über Ihrem Tarif und wurden nicht analysiert"
+    },
+    "filterKind": {
+      "scan_completed": "Scans",
+      "scan_failed": "Scanfehler",
+      "issues_changed": "Problemänderungen",
+      "group_regrew": "Duplikatgruppen",
+      "snoozes_reopened": "Wieder angezeigte Probleme",
+      "autotag_changed": "Auto-Tagging",
+      "auto_tag_disabled": "Auto-Tagging deaktiviert",
+      "plan_changed": "Tarifwechsel",
+      "over_cap": "Über Tarifgrenze"
+    },
+    "pageStatus": "Seite {page} von {pageCount}",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "window": "Die letzten {days} Tage Aktivität werden für Ihren Tarif angezeigt.",
+    "olderHidden": "{count, plural, one {# älteres Ereignis ist} other {# ältere Ereignisse sind}} gespeichert, aber über das Übersichtsfenster Ihres Tarifs hinaus ausgeblendet."
+  }
+}

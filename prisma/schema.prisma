@@ -43,7 +43,6 @@ model Shop {
   planStatus    String?
   planCheckedAt DateTime?
   uiLocale      String?
-  notifyLocale  String?
   timezone      String?
   currency      String?
   shopHandle    String?
@@ -51,15 +50,15 @@ model Shop {
   installedAt   DateTime  @default(now())
   uninstalledAt DateTime?
   lastScanAt    DateTime?
-  lastDigestAt  DateTime?
+  /** "Last visit" marker for in-app alerts; updated only by explicit user action. */
+  activitySeenAt DateTime?
 
-  scans         Scan[]
-  variants      VariantIndex[]
-  issues        Issue[]
-  ignoreRules   IgnoreRule[]
-  jobs          Job[]
-  notifications NotificationLog[]
-  telegramLink  TelegramLinkToken[]
+  scans          Scan[]
+  variants       VariantIndex[]
+  issues         Issue[]
+  ignoreRules    IgnoreRule[]
+  jobs           Job[]
+  activityEvents ActivityEvent[]
 
   @@index([uninstalledAt])
 }
@@ -140,8 +139,6 @@ model Issue {
   lastSeenScanId         String?
   firstSeenAt            DateTime  @default(now())
   resolvedAt             DateTime?
-  notifiedEmailAt        DateTime?
-  notifiedTelegramAt     DateTime?
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -149,6 +146,7 @@ model Issue {
   @@index([shopId, status, severity])
   @@index([shopId, groupKey])
   @@index([shopId, type, status])
+  @@index([shopId, status, firstSeenAt])
 }
 
 model IgnoreRule {
@@ -198,32 +196,19 @@ model Job {
   @@index([kind, status])
 }
 
-model NotificationLog {
-  id          String   @id @default(cuid())
-  shopId      String
-  channel     String // email | telegram
-  kind        String // digest | alert
-  periodKey   String
-  status      String
-  errorCode   String?
-  providerId  String?
-  sentAt      DateTime @default(now())
+model ActivityEvent {
+  id             String    @id @default(cuid())
+  shopId         String
+  kind           String // scan_completed | scan_failed | issues_changed | group_regrew | snoozes_reopened | autotag_changed | auto_tag_disabled | plan_changed | over_cap
+  /** Counts and codes only — never free text or PII (spec <in_app_alerts>). */
+  payload        Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  /** 15-minute bucket for webhook coalescing; null for one-shot events. */
+  coalesceBucket DateTime?
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
-  @@unique([shopId, channel, kind, periodKey])
-  @@index([providerId])
-}
-
-model TelegramLinkToken {
-  tokenHash String
-  shopId    String
-  expiresAt DateTime
-  usedAt    DateTime?
-
-  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@id([tokenHash])
+  @@index([shopId, createdAt(sort: Desc)])
 }
 
 model RateLimitBucket {

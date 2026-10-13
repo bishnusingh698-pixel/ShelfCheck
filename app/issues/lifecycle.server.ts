@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { DetectorResult, IssueStatus, IssueType } from "../detectors/types.js";
+import { recordActivityEvent } from "../activity/events.server.js";
 
 /**
  * Issue lifecycle: upsert (preserving snoozed/ignored/intentional),
@@ -167,6 +168,7 @@ export function matchesIgnoreRules(
  * Intentional regrowth: a group marked intentional (duplicate groups only)
  * reopens ONCE when a new variant joins, with details.group_grew=true.
  * The member count recorded at marking time is the baseline.
+ * Each regrown group records one in-app activity event.
  */
 export async function markIntentionalRegrowth(
   shopId: string,
@@ -204,6 +206,17 @@ export async function markIntentionalRegrowth(
         });
       }
       regrown += 1;
+      const newMembers = currentMembers - baseline;
+      try {
+        await recordActivityEvent({
+          shopId,
+          kind: "group_regrew",
+          payload: { count: newMembers, groupKey: key },
+          client,
+        });
+      } catch {
+        // An activity event must never fail the regrowth handling.
+      }
     }
   }
   return regrown;

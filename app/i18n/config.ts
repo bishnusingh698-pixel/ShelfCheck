@@ -3,8 +3,6 @@
  * Source locale: en. Others produced in Phase 12, kept in sync after.
  */
 
-export const SOURCE_LOCALE = "en" as const;
-
 export const SUPPORTED_LOCALES = [
   "en",
   "de",

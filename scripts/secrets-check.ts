@@ -30,8 +30,6 @@ const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
   { name: "github token", re: /\b(ghp|gho|ghu|ghs|github_pat)_[A-Za-z0-9_]{20,}/ },
   { name: "shopify token", re: /\b(shpat|shpca|shppa)_[a-fA-F0-9]{32}\b/ },
   { name: "shopify webhook secret", re: /\bshpss_[a-fA-F0-9]{32,}\b/ },
-  { name: "resend key", re: /\bre_[A-Za-z0-9]{20,}\b/ },
-  { name: "telegram bot token", re: /\b\d{8,10}:[A-Za-z0-9_-]{35}\b/ },
   { name: "slack token", re: /\bxox[baprs]-[A-Za-z0-9-]{10,}/ },
   { name: "aws key", re: /\bAKIA[0-9A-Z]{16}\b/ },
   { name: "stripe key", re: /\b(sk|pk|rk)_(live|test)_[A-Za-z0-9]{20,}\b/ },

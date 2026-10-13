@@ -22,14 +22,13 @@ export function testDb(): PrismaClient {
 
 const TABLES = [
   "RateLimitBucket",
-  "TelegramLinkToken",
-  "NotificationLog",
   "WebhookEvent",
   "Job",
   "IgnoreRule",
   "Issue",
   "VariantIndex",
   "Scan",
+  "ActivityEvent",
   "Session",
   "Shop",
 ];
@@ -56,11 +55,11 @@ export async function createShop(
     timezone: string;
     currency: string;
     uiLocale: string;
-    notifyLocale: string;
     settings: Record<string, unknown>;
     lastScanAt: Date;
     uninstalledAt: Date;
     shopHandle: string;
+    activitySeenAt: Date;
   }> = {},
 ) {
   const db = testDb();
@@ -72,11 +71,11 @@ export async function createShop(
       timezone: overrides.timezone ?? "UTC",
       currency: overrides.currency ?? "USD",
       uiLocale: overrides.uiLocale ?? "en",
-      notifyLocale: overrides.notifyLocale ?? "en",
       shopHandle: overrides.shopHandle ?? `test-${n}`,
       settings: (overrides.settings ?? {}) as never,
       lastScanAt: overrides.lastScanAt ?? null,
       uninstalledAt: overrides.uninstalledAt ?? null,
+      activitySeenAt: overrides.activitySeenAt ?? null,
     },
   });
 }
@@ -165,6 +164,63 @@ export async function createScan(
       attempt: overrides.attempt ?? 0,
       startedAt: overrides.startedAt ?? null,
       finishedAt: overrides.finishedAt ?? null,
+    },
+  });
+}
+
+/** Factory: an issue row for tests. */
+export async function createIssue(
+  shopId: string,
+  overrides: Partial<{
+    type: string;
+    severity: string;
+    status: string;
+    variantGid: string;
+    productGid: string | null;
+    groupKey: string | null;
+    details: Record<string, unknown>;
+    snoozedUntil: Date | null;
+    firstSeenAt: Date;
+    resolvedAt: Date | null;
+  }> = {},
+) {
+  const db = testDb();
+  const n = Math.floor(Math.random() * 1_000_000_000);
+  return db.issue.create({
+    data: {
+      shopId,
+      type: overrides.type ?? "MISSING_BARCODE",
+      severity: overrides.severity ?? "medium",
+      status: overrides.status ?? "open",
+      variantGid: overrides.variantGid ?? `gid://shopify/ProductVariant/${n}`,
+      productGid: overrides.productGid ?? null,
+      groupKey: overrides.groupKey ?? "",
+      details: (overrides.details ?? {}) as never,
+      snoozedUntil: overrides.snoozedUntil ?? null,
+      firstSeenAt: overrides.firstSeenAt ?? new Date(),
+      resolvedAt: overrides.resolvedAt ?? null,
+    },
+  });
+}
+
+/** Factory: an activity event row for tests. */
+export async function createActivityEvent(
+  shopId: string,
+  overrides: Partial<{
+    kind: string;
+    payload: Record<string, unknown>;
+    createdAt: Date;
+    coalesceBucket: Date | null;
+  }> = {},
+) {
+  const db = testDb();
+  return db.activityEvent.create({
+    data: {
+      shopId,
+      kind: (overrides.kind ?? "scan_completed") as never,
+      payload: (overrides.payload ?? {}) as never,
+      createdAt: overrides.createdAt ?? new Date(),
+      coalesceBucket: overrides.coalesceBucket ?? null,
     },
   });
 }

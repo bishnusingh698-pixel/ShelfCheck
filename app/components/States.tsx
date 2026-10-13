@@ -12,21 +12,6 @@ export function EmptyState({ message, children }: { message?: string; children?:
   );
 }
 
-/** Shared error state with retry (spec <file_layout> components). */
-export function ErrorState({ onRetry }: { onRetry?: () => void }) {
-  const { t } = useI18n();
-  return (
-    <s-box padding="base">
-      <s-paragraph>{t("common.errorTitle")}</s-paragraph>
-      <s-paragraph>{t("common.errorBody")}</s-paragraph>
-      {onRetry && (
-        <s-button variant="secondary" onClick={onRetry}>
-          {t("common.retry")}
-        </s-button>
-      )}
-    </s-box>
-  );
-}
 
 /** Loading skeleton per screen — headings stay visible, content shimmering. */
 export function Skeletons({ rows = 3 }: { rows?: number }) {

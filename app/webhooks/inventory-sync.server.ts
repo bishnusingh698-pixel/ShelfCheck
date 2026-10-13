@@ -17,14 +17,11 @@ import { logger } from "../lib/logger.server.js";
 
 export const INVENTORY_COALESCE_MS = 5_000;
 
-/** Per-shop throttle: a shop may run at most this many inventory syncs per hour. */
-export const INVENTORY_SYNC_PER_SHOP_PER_HOUR = 240;
-
 export interface InventorySyncResult {
   variants: number;
   opened: number;
   resolved: number;
-  skipped?: "free-plan" | "throttled" | "no-variants";
+  skipped?: "free-plan" | "no-variants";
 }
 
 /** Apply one inventory update to the mapped variants and re-check the one rule. */

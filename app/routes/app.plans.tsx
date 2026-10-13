@@ -7,14 +7,16 @@ import { getEnv } from "../env.server.js";
 import { adminHttpsUrl } from "../lib/admin-urls.js";
 import { translateTemplate, type Messages } from "../i18n/translate.js";
 import { useI18n } from "../i18n/i18n.context";
-import { formatNumber } from "../i18n/format";
+import { formatCurrency, formatNumber } from "../i18n/format";
 import { PLANS, type PlanId, type PlanLimits } from "../billing/plans.js";
 
 /**
- * Plans comparison + upgrade (spec <ui_spec> §6). Plan truth comes from the
+ * Plans comparison + upgrade (spec <ui_spec> §7). Plan truth comes from the
  * stored row (fed by app_subscriptions/update); the upgrade button opens the
- * Managed Pricing page in the merchant's admin (docs/api-notes.md §8 —
+ * Shopify App Pricing page in the merchant's admin (docs/api-notes.md §8 —
  * exact URL form is [LIVE]-pending; the https fallback form is used).
+ * Prices are USD and formatted as USD for the interface locale (never
+ * converted to the shop's currency).
  */
 
 const PLAN_ORDER: PlanId[] = ["free", "starter", "pro"];
@@ -48,6 +50,11 @@ export default function PlansRoute() {
     return t(`plans.scheduled.${value}`);
   };
 
+  const price = (limits: PlanLimits): string =>
+    limits.priceUsd === 0
+      ? t("plans.free")
+      : formatCurrency(limits.priceUsd, locale, "USD");
+
   return (
     <s-page heading={t("plans.title")}>
       <s-section>
@@ -64,6 +71,12 @@ export default function PlansRoute() {
             </s-table-header-row>
           </s-table-header>
           <s-table-body>
+            <s-table-row key="price">
+              <s-table-cell>{t("plans.feature.price")}</s-table-cell>
+              {data.plans.map((p) => (
+                <s-table-cell key={p.id}>{price(p)}</s-table-cell>
+              ))}
+            </s-table-row>
             {(
               [
                 ["scheduled", "plans.feature.scans"],
@@ -71,10 +84,10 @@ export default function PlansRoute() {
                 ["issueVisibilityLimit", "plans.feature.issuesShown"],
                 ["variantCap", "plans.feature.variantCap"],
                 ["webhookWatchers", "plans.feature.watchers"],
-                ["emailDigest", "plans.feature.digest"],
+                ["weeklySummary", "plans.feature.weeklySummary"],
+                ["activityHistoryDays", "plans.feature.activityHistory"],
                 ["csvExportRows", "plans.feature.csv"],
                 ["autoTag", "plans.feature.autoTag"],
-                ["telegram", "plans.feature.telegram"],
               ] as Array<[keyof PlanLimits, string]>
             ).map(([feature, labelKey]) => (
               <s-table-row key={feature}>

@@ -5,6 +5,7 @@ import {
   startBulkOperation,
   readBulkOperation,
   fetchResultStream,
+  pollDelayMs,
   type OperationStatus,
 } from "./bulk-operation.server.js";
 import type { AdminGraphQLExecutor } from "../lib/admin-graphql.server.js";
@@ -26,6 +27,7 @@ import { healthScore } from "../issues/health-score.js";
 import { reconcileAfterScan } from "./reconcile.server.js";
 import { enqueue } from "../jobs/queue.server.js";
 import { tryLockShop } from "../lib/advisory-lock.server.js";
+import { recordActivityEvent } from "../activity/events.server.js";
 
 /**
  * Scan state machine: trigger → lock → start bulk op → await (webhook first,
@@ -35,15 +37,6 @@ import { tryLockShop } from "../lib/advisory-lock.server.js";
  * operation id; the finish webhook and the polling job race safely because
  * both re-check the scan status before parsing.
  */
-
-export type ExecutorFactory = (shopId: string) => Promise<{
-  graphql: (query: string, variables?: Record<string, unknown>) => Promise<unknown>;
-}>;
-
-export interface ScanFailInfo {
-  errorCode: string;
-  attempt: number;
-}
 
 const MAX_START_ATTEMPTS = 3;
 
@@ -74,6 +67,21 @@ export async function startScan(
       where: { id: scanId },
       data: { bulkOperationId: op.id },
     });
+    // Polling fallback (spec §scan_pipeline step 3): webhook first, but the
+    // instance may be asleep when it fires, so a poll chain (5 s start,
+    // exponential, 60 s cap) starts now. Whichever wins makes the other a
+    // no-op: parseAndDetect skips terminal scans and pollScan skips
+    // non-running ones.
+    await enqueue(
+      {
+        kind: "scan_poll",
+        payload: { scanId, attempt: 1 },
+        shopId,
+        runAt: new Date(now.getTime() + pollDelayMs(1)),
+        dedupeKey: `scan_poll:${scanId}`,
+      },
+      client,
+    );
     return { started: true, bulkOperationId: op.id };
   } catch (error) {
     const scan = await client.scan.findUnique({ where: { id: scanId } });
@@ -162,7 +170,7 @@ export async function parseAndDetect(params: {
     variantCap: cap,
   });
 
-  await runDetection({ shopId, scanId, settings, client, logger, streamResult });
+  await runDetection({ shopId, scanId, settings, plan, client, logger, streamResult });
 }
 
 /** Detection phase: duplicates in SQL, row rules in code, lifecycle upserts. */
@@ -170,6 +178,7 @@ export async function runDetection(params: {
   shopId: string;
   scanId: string;
   settings: Record<string, unknown>;
+  plan?: string;
   client: PrismaClient;
   logger: Logger;
   streamResult: { variantsSeen: number; overCapCount: number };
@@ -266,6 +275,35 @@ export async function runDetection(params: {
     "scan completed",
   );
 
+  // In-app activity events (spec <in_app_alerts>). Failure to record an
+  // event must never fail the scan; counts and codes only.
+  try {
+    await recordActivityEvent({
+      shopId,
+      kind: "scan_completed",
+      payload: {
+        opened,
+        resolved,
+        regrown,
+        score,
+        variantsAnalyzed: streamResult.variantsSeen,
+      },
+      client,
+      now,
+    });
+    if (streamResult.overCapCount > 0) {
+      await recordActivityEvent({
+        shopId,
+        kind: "over_cap",
+        payload: { count: streamResult.overCapCount, cap: variantCap(params.plan ?? "free") },
+        client,
+        now,
+      });
+    }
+  } catch (err) {
+    logger.warn({ err, shopId, scanId }, "activity event recording failed");
+  }
+
   // Auto-tag runs after a completed scan only (never from webhook-driven
   // work): the fingerprint check in product-sync is the loop guard (D-31).
   if (params.settings.autoTag === true) {
@@ -275,19 +313,6 @@ export async function runDetection(params: {
         payload: { shopId, scanId },
         shopId,
         dedupeKey: `autotag:${shopId}:${scanId}`,
-      },
-      client,
-    );
-  }
-
-  // Enqueue notifications for newly opened issues (digest/alert jobs check plan).
-  if (opened > 0) {
-    await enqueue(
-      {
-        kind: "notify_new_issues",
-        payload: { scanId, openedCount: opened },
-        shopId,
-        dedupeKey: `notify:${scanId}`,
       },
       client,
     );
@@ -331,10 +356,23 @@ export async function failScan(
   errorCode: string,
   client: PrismaClient,
 ): Promise<void> {
-  await client.scan.updateMany({
+  const updated = await client.scan.updateMany({
     where: { id: scanId, shopId, status: { in: ["queued", "running", "parsing"] } },
     data: { status: "failed", errorCode, finishedAt: new Date() },
   });
+  if (updated.count > 0) {
+    // The terminal failure event (retries that requeue are not failures yet).
+    try {
+      await recordActivityEvent({
+        shopId,
+        kind: "scan_failed",
+        payload: { code: errorCode },
+        client,
+      });
+    } catch {
+      // Activity events must never break the failure path either.
+    }
+  }
 }
 
 /** Trigger: create a scan under the shop lock; returns existing if active. */

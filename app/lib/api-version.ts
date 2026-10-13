@@ -5,4 +5,3 @@
 export const ADMIN_API_VERSION = "2026-07" as const;
 
 /** The same version as the enum member name in @shopify/shopify-api. */
-export const ADMIN_API_VERSION_ENUM = "July26" as const;

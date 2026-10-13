@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "ShelfCheck",
+    "tagline": "出荷を止める前に、カタログの問題を見つけて修正しましょう。",
+    "documentTitle": "ShelfCheck — {title}"
+  },
+  "auth": {
+    "heading": "ログイン",
+    "button": "ログイン",
+    "shopLabel": "ストアドメイン",
+    "shopDetails": "example.myshopify.com",
+    "error": {
+      "missingShop": "ログインするにはストアドメインを入力してください",
+      "invalidShop": "ログインするには有効なストアドメインを入力してください"
+    }
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "issues": "問題",
+    "rules": "ルール",
+    "settings": "設定",
+    "plans": "プラン",
+    "activity": "アクティビティ",
+    "activityBadge": "新着"
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "retry": "再試行",
+    "undo": "元に戻す",
+    "close": "閉じる",
+    "copySku": "SKUをコピー",
+    "copied": "クリップボードにコピーしました",
+    "openInAdmin": "Shopify管理画面で開く",
+    "loading": "読み込み中…",
+    "errorTitle": "問題が発生しました",
+    "errorBody": "最後の操作を完了できませんでした。再試行できます。",
+    "empty": "まだ何もありません"
+  },
+  "issue": {
+    "type": {
+      "MISSING_SKU": "SKUが未入力",
+      "DUPLICATE_SKU": "SKUの重複",
+      "MISSING_BARCODE": "バーコードが未入力",
+      "DUPLICATE_BARCODE": "バーコードの重複",
+      "INVALID_BARCODE": "無効なバーコード",
+      "PUBLISHED_ZERO_INVENTORY": "在庫ゼロで公開中",
+      "VARIANT_MISSING_IMAGE": "バリエーションに画像がない",
+      "MISSING_WEIGHT": "重量が未入力",
+      "MISSING_COST": "原価が未入力",
+      "COMPARE_AT_INVALID": "無効な比較価格",
+      "ZERO_PRICE": "価格がゼロ"
+    },
+    "severity": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "status": {
+      "open": "未解決",
+      "snoozed": "スヌーズ中",
+      "ignored": "無視",
+      "intentional": "意図的",
+      "resolved": "解決済み"
+    },
+    "hint": {
+      "scientific_notation": "科学的表記のようです（CSVエクスポートでこのバーコードが破損した可能性があります）",
+      "likely_dropped_leading_zero": "11桁の値です。先頭の0が失われた可能性があります",
+      "inner_whitespace": "値の中に空白が含まれています"
+    },
+    "detail": {
+      "COMPARE_AT_INVALID_lower": "比較価格が価格を下回っています",
+      "COMPARE_AT_INVALID_equal": "比較価格が価格と同じです",
+      "case_or_space_only": "これらのSKUは大文字・小文字またはスペースのみが異なります",
+      "group_grew": "新しいバリエーションがこのグループに加わりました"
+    },
+    "actions": {
+      "snooze": "スヌーズ",
+      "ignore": "無視",
+      "intentional": "意図的としてマーク",
+      "resolve": "解決済みとしてマーク",
+      "unsnooze": "スヌーズを解除"
+    },
+    "snooze": {
+      "days": "{count, plural, =7 {7日間} =30 {30日間} =90 {90日間} other {{count}日間}}",
+      "banner": "{date}までスヌーズ中。自動的に再表示されます。"
+    },
+    "list": {
+      "title": "問題",
+      "empty": "現在のフィルターに一致する問題はありません。カタログの状態は良好です。",
+      "filterType": "問題の種類",
+      "filterSeverity": "重要度",
+      "filterStatus": "ステータス",
+      "filterVendor": "ベンダー",
+      "search": "SKUまたは商品名で検索",
+      "sortBy": "並び替え",
+      "sortSeverity": "重要度",
+      "sortFirstSeen": "最初の検出",
+      "bulkSnooze": "選択項目をスヌーズ",
+      "bulkIgnore": "選択項目を無視",
+      "bulkIntentional": "選択項目を意図的としてマーク",
+      "selected": "{count, plural, other {#件の問題を選択中}}",
+      "newBadge": "新着",
+      "groupMembers": "このグループのすべてのメンバー",
+      "overCapHidden": "{count, plural, other {#件の問題がプランの表示上限を超えています}}",
+      "previous": "前へ",
+      "next": "次へ",
+      "pageStatus": "{pageCount}ページ中{page}ページ目（{total}件の問題）",
+      "actions": "操作",
+      "newOnlyFilter": "新着のみ"
+    }
+  },
+  "dashboard": {
+    "title": "カタログの健全性",
+    "healthScore": "健康スコア",
+    "band": {
+      "excellent": "優秀",
+      "good": "良好",
+      "needs_attention": "要対応",
+      "critical": "重大"
+    },
+    "counts": {
+      "title": "重要度別の問題",
+      "high": "{count, plural, other {重要度高の問題：#件}}",
+      "medium": "{count, plural, other {重要度中の問題：#件}}",
+      "low": "{count, plural, other {重要度低の問題：#件}}",
+      "byType": "種類別の問題"
+    },
+    "scan": {
+      "title": "前回のスキャン",
+      "status": {
+        "queued": "待機中",
+        "running": "スキャン中…",
+        "parsing": "結果を読み込み中…",
+        "completed": "完了",
+        "failed": "失敗",
+        "canceled": "キャンセル済み"
+      },
+      "runNow": "今すぐスキャン",
+      "lastScanAt": "前回のスキャン：{time}",
+      "never": "未スキャン",
+      "cooldown": "あと{minutes}分で再度スキャンできます",
+      "failedBody": "前回のスキャンを完了できませんでした。再試行できます。",
+      "variants": "{count, plural, other {#個のバリエーションを分析}}"
+    },
+    "usage": {
+      "title": "プランの使用状況",
+      "variants": "{cap}個中{analyzed}個のバリエーションを分析",
+      "overCap": "{count, plural, other {#個のバリエーションがプランの上限を超えたため分析されませんでした}}",
+      "overCapNote": "これらに関わる重複が見落とされる可能性があります。",
+      "upgrade": "アップグレード"
+    },
+    "trend": {
+      "title": "新規と解決の推移",
+      "last8": "直近8回のスキャン",
+      "new": "新規",
+      "resolved": "解決",
+      "scan": "スキャン{n}"
+    },
+    "onboarding": {
+      "title": "ShelfCheckを設定",
+      "scanRunning": "初回スキャンを実行中",
+      "reviewIssues": "問題を確認",
+      "done": "完了",
+      "chooseChecks": "実行するチェックを選択"
+    },
+    "sinceLastVisit": {
+      "title": "前回閲覧以降",
+      "newIssues": "前回閲覧以降の新規問題：{count, plural, =0 {なし} other {#件}}（うち重要度高：{high, plural, =0 {なし} other {#件}}）",
+      "resolvedIssues": "前回閲覧以降に解決された問題：{count, plural, =0 {なし} other {#件}}",
+      "scansFinished": "前回閲覧以降に完了したスキャン：{count, plural, =0 {なし} other {#回}}",
+      "scansFailed": "前回閲覧以降に失敗したスキャン：{count, plural, =0 {なし} other {#回}}",
+      "scoreChange": "前回閲覧以降に健康スコアが{delta}変化しました",
+      "markSeen": "すべて既読にする",
+      "nothingNew": "前回閲覧以降の新しい情報はありません",
+      "seenToast": "アクティビティを既読にしました。",
+      "undo": "元に戻す"
+    },
+    "needsAttention": {
+      "title": "要対応",
+      "view": "表示",
+      "openInAdmin": "Shopify管理画面で開く"
+    },
+    "weeklySummary": {
+      "title": "今週",
+      "newIssues": "今週の新規問題：{count, plural, =0 {なし} other {#件}}（先週：{last}）",
+      "resolvedIssues": "今週解決された問題：{count, plural, =0 {なし} other {#件}}（先週：{last}）",
+      "scoreChange": "健康スコアは先週から{direction} {delta}",
+      "improved": "上昇",
+      "declined": "下降"
+    }
+  },
+  "scan": {
+    "started": "スキャンを開始しました。通常は数分で完了します。",
+    "denied": {
+      "free": "現在のプランではスキャンは月1回です。頻繁にスキャンするにはアップグレードしてください。",
+      "dailyLimit": "本日のプランのスキャン回数の上限に達しました。",
+      "cooldown": "スキャンが実行されたばかりです。次のスキャンまでしばらくお待ちください。",
+      "active": "すでにスキャンが実行中です。"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "issueTypes": "問題の種類",
+    "issueTypesHelp": "表示したくないチェックはオフにしてください。",
+    "catalog": {
+      "title": "カタログの範囲",
+      "includeDraft": "下書きを含める",
+      "includeArchived": "アーカイブ済み商品を含める",
+      "acceptNonGtin": "GS1以外のバーコードを許可",
+      "acceptNonGtinHelp": "オンにすると、GS1の長さのバーコードのみチェックデジット検証の対象になります。"
+    },
+    "autoTag": {
+      "title": "自動タグ付け",
+      "enable": "問題のある商品にタグを付ける",
+      "help": "未解決の問題がある商品に「shelfcheck-fix」タグを付けます。write_products権限が必要です。ここで付与できます。",
+      "requestScope": "権限を付与",
+      "granted": "権限が付与されました",
+      "denied": "自動タグ付けにはwrite_products権限が必要です。"
+    },
+    "language": {
+      "title": "言語",
+      "interface": "表示言語"
+    }
+  },
+  "rules": {
+    "title": "無視ルール",
+    "empty": "無視ルールはまだありません。ルールに一致する問題はリストに表示されなくなります。",
+    "scope": {
+      "sku": "SKU",
+      "variant": "バリエーション",
+      "product": "商品",
+      "vendor": "ベンダー"
+    },
+    "value": "値",
+    "issueType": "問題の種類（任意）",
+    "issueTypeAny": "すべての種類",
+    "note": "メモ（任意）",
+    "add": "ルールを追加",
+    "delete": "削除",
+    "scopeLabel": "ルールの範囲"
+  },
+  "plans": {
+    "title": "プラン",
+    "free": "無料",
+    "starter": {
+      "name": "Starter"
+    },
+    "pro": {
+      "name": "Pro"
+    },
+    "compare": "プランを比較",
+    "current": "現在のプラン",
+    "upgrade": "プランを見てアップグレード",
+    "openManagedPricing": "Shopifyでサブスクリプションを管理",
+    "locked": {
+      "watchers": "WebhookウォッチャーはStarterとProでご利用いただけます。",
+      "autoTag": "自動タグ付けはProでご利用いただけます。",
+      "weeklySummary": "週次サマリーはStarterとProでご利用いただけます。",
+      "activityHistory": "より長いアクティビティ履歴は有料プランでご利用いただけます。"
+    },
+    "feature": {
+      "scans": "スケジュールされたスキャン",
+      "manualScans": "1日の手動スキャン回数",
+      "issuesShown": "表示される問題数",
+      "variantCap": "分析されるバリエーション数",
+      "watchers": "Webhookウォッチャー",
+      "csv": "CSVエクスポート",
+      "autoTag": "自動タグ付け",
+      "price": "価格",
+      "weeklySummary": "週次サマリー",
+      "activityHistory": "アクティビティ履歴（日数）"
+    },
+    "unlimited": "無制限",
+    "yes": "含まれる",
+    "no": "含まれない",
+    "scheduled": {
+      "monthly": "月次",
+      "weekly": "週次",
+      "daily": "日次"
+    }
+  },
+  "toast": {
+    "saved": "設定を保存しました",
+    "snoozed": "問題をスヌーズしました",
+    "ignored": "問題を無視しました",
+    "intentional": "意図的としてマークしました",
+    "resolved": "解決済みとしてマークしました",
+    "scanStarted": "スキャンを開始しました",
+    "ruleAdded": "ルールを追加しました",
+    "ruleDeleted": "ルールを削除しました",
+    "undone": "元に戻しました"
+  },
+  "csv": {
+    "export": "CSVをエクスポート",
+    "contentType": "text/csv"
+  },
+  "errors": {
+    "notFound": "見つかりません",
+    "forbidden": "これにアクセスする権限がありません",
+    "generic": "問題が発生しました。もう一度お試しください。"
+  },
+  "activity": {
+    "title": "アクティビティ",
+    "empty": "この期間のアクティビティはまだありません。",
+    "filter": "種類で絞り込む",
+    "all": "すべてのアクティビティ",
+    "older": "より古いイベントは保存されていますが、プランの履歴期間を超えると非表示になります。",
+    "upgrade": "アップグレードして履歴をさらに表示",
+    "markSeen": "すべて既読にする",
+    "kind": {
+      "scan_completed": "スキャン完了：新規問題{opened, plural, =0 {なし} other {#件}}、解決{resolved, plural, =0 {なし} other {#件}}。健康スコア {score}",
+      "scan_failed": "スキャン失敗：{code}",
+      "issues_changed": "問題の変化：新規{opened, plural, =0 {なし} other {#件}}、解決{resolved, plural, =0 {なし} other {#件}}",
+      "group_regrew": "意図的としてマークされた重複グループに{count, plural, =0 {新しいメンバーはありません} other {#件の新しいメンバー}}が加わりました",
+      "snoozes_reopened": "スヌーズ中の問題が{count, plural, other {#件}}再表示されました",
+      "autotag_changed": "{count, plural, other {#個の商品}}にshelfcheck-fixタグを付けました",
+      "auto_tag_disabled": "自動タグ付けが無効になりました：write_products権限が取り消されました",
+      "plan_changed": "プランが{plan}に変更されました",
+      "over_cap": "{count, plural, other {#個のバリエーション}}がプランの上限を超えたため分析されませんでした"
+    },
+    "filterKind": {
+      "scan_completed": "スキャン",
+      "scan_failed": "スキャン失敗",
+      "issues_changed": "問題の変化",
+      "group_regrew": "重複グループ",
+      "snoozes_reopened": "再表示されたスヌーズ",
+      "autotag_changed": "自動タグ付け",
+      "auto_tag_disabled": "自動タグ付け無効",
+      "plan_changed": "プラン変更",
+      "over_cap": "上限超過"
+    },
+    "pageStatus": "{pageCount}ページ中{page}ページ目",
+    "previous": "前へ",
+    "next": "次へ",
+    "window": "プランの履歴期間である直近{days}日間のアクティビティを表示しています。",
+    "olderHidden": "{count, plural, other {#件の}}より古いイベントは保存されていますが、プランの履歴期間を超えるため非表示です。"
+  }
+}

@@ -55,6 +55,3 @@ export function formatRelativeTime(date: Date, locale: string, now: Date = new D
   return rtf.format(0, "second");
 }
 
-export function formatList(items: string[], locale: string): string {
-  return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(items);
-}

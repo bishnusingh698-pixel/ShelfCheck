@@ -19,12 +19,3 @@ export function productAdminPath(handle: string, productIdGid: string): string {
   return adminHttpsUrl(handle, `products/${id}`);
 }
 
-export function variantInventoryAdminPath(handle: string, inventoryItemIdGid: string): string {
-  const id = inventoryItemIdGid.replace(/^gid:\/\/shopify\/InventoryItem\//, "");
-  return adminHttpsUrl(handle, `inventory/inventoryitems/${id}`);
-}
-
-export function appPath(appHandle: string, path = ""): string {
-  const clean = path.replace(/^\/+/, "");
-  return `https://admin.shopify.com/store/${appHandle}/apps/${clean}`;
-}
